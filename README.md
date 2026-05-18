@@ -1,52 +1,76 @@
 # ShabbatScores
 
-Always-on iPad dashboard for Shabbat: live sports scores, Israel + US news, Paramus weather, and Hebrew calendar times. Built to be set up before Shabbat and run autonomously for 25 hours with no taps.
+An always-on dashboard for Shabbat. Set it up once before Shabbat starts; for the next 25 hours it pulls live scores, news, weather, social posts, and candle-lighting times automatically — no touch required.
 
-## Stack
-- Next.js 15 (App Router) + TypeScript + Tailwind
-- Server-side API routes proxy all upstream APIs (so keys stay private)
-- Polling on the client (no websockets, no service worker needed)
-- Screen Wake Lock API to keep the iPad display on
+## What you get
+
+- **Live sports** across MLB, NFL, NBA, NHL, college football, college basketball
+- **Featured gamecast** — when one of your favorite teams is playing live, you get the hero card with sport-specific detail (baseball diamond + runners, football down & distance + possession, basketball/hockey clock & period, plus last play and win probability)
+- **Compact score ticker** at the bottom cycling through every league with games today
+- **News ticker** scrolling Times of Israel, JPost, BBC, NPR
+- **Social feed** showing the 10 most recent posts from Telegram public channels and Bluesky accounts of your choice, cycling 2 at a time every 12 seconds
+- **Shabbat times** — parashah or holiday, candle-lighting, havdalah, plus the Hebrew date
+- **Weather** for any US ZIP — current conditions + next 4 forecast periods with icons
+
+## Set up before Shabbat (5 minutes)
+
+1. Open the dashboard URL in **Safari** on the iPad you want to use.
+2. Tap **Share → Add to Home Screen**. Launch from the home-screen icon so it runs fullscreen.
+3. In the dashboard, tap the yellow **"Tap to enable"** badge in the top-left. It turns green and reads **"Always-on"** — that's the Screen Wake Lock keeping the display on.
+4. In iPad settings: **Display & Brightness → Auto-Lock → Never**. Required as a safety net.
+5. Plug the iPad in.
+6. Tap the **⚙ gear** in the top right to customize teams, location, and social feed sources.
+
+## Customizing (the ⚙ gear)
+
+| Setting | What it does |
+|---|---|
+| **Location** | ZIP code drives both weather and candle-lighting times. Default: Paramus, NJ (07652). |
+| **Teams** | Search ~500 ESPN teams across all six leagues. **Follow ✓** = small card. **Primary ★** = hero gamecast card when playing live. |
+| **Social feed** | Add Telegram public channel handles (e.g. `osint613`) or Bluesky handles (e.g. `bellingcat.com`). Paste a handle or a URL; it normalizes either. |
+| **Share link** | "Copy share link" puts your full configuration into a URL. Send to friends; they open it once and their dashboard saves your picks automatically. |
+| **Reset to defaults** | Restores the original New York / Alabama / St. John's lineup, Paramus location, and the default Telegram channel. |
 
 ## Data sources
-- **Sports:** ESPN public scoreboard JSON (`site.api.espn.com`) — no key needed. Followed teams: Mets, Yankees, Jets, Giants, Rangers, Devils, Knicks, Alabama (CFB), St. John's (MBB). All MLB/NBA/NHL/NFL playoff games are auto-included.
-- **Sports fallback:** SerpAPI (`SERPAPI_KEY` env var) — wired in `lib/serpapi.ts`, not invoked by default. Add it if you need it for college games ESPN misses.
-- **Weather:** National Weather Service (`api.weather.gov`) — hard-coded to Paramus, NJ (40.9445, -74.0754). No key.
-- **Hebrew calendar:** Hebcal Shabbat API, ZIP 07652. No key.
-- **News:** RSS — Times of Israel, Jerusalem Post, AP top news, AP US news. No key.
 
-## Local dev
-```
+Everything is free public data — no API keys required, no paid subscriptions.
+
+| Card | Source |
+|---|---|
+| Sports + scoreboard | ESPN public scoreboard (`site.api.espn.com`) |
+| Team catalog | ESPN teams endpoint per league |
+| Weather | National Weather Service (`api.weather.gov`) + Open-Meteo geocoding for ZIP → lat/lon |
+| Hebrew calendar | Hebcal Shabbat API |
+| News ticker | RSS: Times of Israel, JPost, BBC, NPR |
+| Social feed | Public Telegram channel previews (`t.me/s/CHANNEL`) and Bluesky public AppView API |
+
+## Tech stack
+
+- Next.js 15 (App Router) + TypeScript + Tailwind
+- Server-side API routes proxy all upstream sources
+- Client polls on a per-card cadence (sports 30s, social 2m, weather 10m, Hebcal 1h, news 10m)
+- Screen Wake Lock API + PWA manifest for fullscreen iPad use
+- All viewer settings persist in localStorage; share URLs encode them in query params
+
+## Local development
+
+```bash
 npm install
 npm run dev
 ```
-Open http://localhost:3000
 
-## Deploying to Vercel
-1. Push this repo to GitHub.
-2. Import into Vercel — it auto-detects Next.js.
-3. (Optional) add `SERPAPI_KEY` in Project Settings → Environment Variables.
-4. Deploy.
+Opens on http://localhost:3000.
 
-## Using on the iPad
-1. Open the deployed URL in Safari.
-2. Tap **Share → Add to Home Screen**.
-3. Launch from the home-screen icon — it runs fullscreen, no Safari chrome.
-4. On first launch, the page acquires a Screen Wake Lock so the display stays on. Keep the iPad plugged in.
+## Deploying
 
-## Refresh cadence
-| Source | Client poll | Server cache |
-|---|---|---|
-| Sports | 30s | 30s |
-| Weather | 10m | 10m |
-| Hebcal | 60m | 1h |
-| News | 10m | 10m |
+Hosted on Vercel. Pushing to `main` auto-deploys. No environment variables required.
 
-Caches are server-side (Next.js `revalidate`); client polling triggers fresh fetches but the upstream is shielded from rate limits.
+## Troubleshooting
 
-## Files
-- `app/api/*` — server routes (sports/weather/hebcal/news)
-- `lib/espn.ts` — ESPN scoreboard fetch + game normalization
-- `lib/teams.ts` — followed-team config
-- `lib/serpapi.ts` — SerpAPI fallback
-- `components/*` — UI components (SportsGrid, WeatherCard, HebcalCard, NewsTicker, Clock, WakeLockBadge)
+**Screen turned off mid-Shabbat.** Auto-Lock wasn't set to Never. Wake Lock alone can't override aggressive Auto-Lock.
+
+**Scores look stale.** Polling runs every 30s while the tab is visible. If the iPad has been on a long time and feels frozen, force-quit Safari and reopen from the home-screen icon.
+
+**Social feed shows "Loading…".** Telegram channel must be public; check the handle is correct (case-insensitive but otherwise exact). Bluesky handles must be valid existing accounts.
+
+**Wrong team shows up.** ESPN team IDs are stored in your iPad localStorage. Search for the right team in the picker, ✓ to add, then unfollow the wrong one. Or hit "Reset to defaults" to start clean.
