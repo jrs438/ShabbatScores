@@ -6,6 +6,8 @@ export type UserSettings = {
   followed: string[];
   locationZip: string;
   locationLabel: string;
+  telegramChannels: string[]; // handles, e.g. ["osint613"]
+  blueskyHandles: string[]; // handles, e.g. ["avivaklompas.bsky.social"]
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -13,6 +15,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   followed: FOLLOWED_TEAMS.map((t) => t.espnId),
   locationZip: "07652",
   locationLabel: "Paramus, NJ",
+  telegramChannels: ["osint613"],
+  blueskyHandles: [],
 };
 
 const STORAGE_KEY = "shabbatscores:settings:v2";
@@ -76,6 +80,8 @@ export function settingsToQuery(s: UserSettings): string {
   if (s.locationLabel && s.locationLabel !== DEFAULT_SETTINGS.locationLabel) {
     params.set("l", s.locationLabel);
   }
+  if (s.telegramChannels.length > 0) params.set("tg", s.telegramChannels.join(","));
+  if (s.blueskyHandles.length > 0) params.set("bs", s.blueskyHandles.join(","));
   return params.toString();
 }
 
@@ -87,11 +93,32 @@ export function settingsFromQuery(search: string): Partial<UserSettings> | null 
   const f = params.get("f");
   const z = params.get("z");
   const l = params.get("l");
+  const tg = params.get("tg");
+  const bs = params.get("bs");
   if (p) out.primary = migrateAbbrs(p.split(",").filter(Boolean));
   if (f) out.followed = migrateAbbrs(f.split(",").filter(Boolean));
   if (z) out.locationZip = z;
   if (l) out.locationLabel = l;
+  if (tg) out.telegramChannels = tg.split(",").filter(Boolean);
+  if (bs) out.blueskyHandles = bs.split(",").filter(Boolean);
   return Object.keys(out).length > 0 ? out : null;
+}
+
+export function normalizeTelegramHandle(input: string): string {
+  return input
+    .trim()
+    .replace(/^@/, "")
+    .replace(/^https?:\/\/t\.me\//i, "")
+    .replace(/^s\//i, "")
+    .replace(/\/.*$/, ""); // strip post-id if user pasted a message URL
+}
+
+export function normalizeBlueskyHandle(input: string): string {
+  return input
+    .trim()
+    .replace(/^@/, "")
+    .replace(/^https?:\/\/(?:bsky\.app\/profile\/)?/i, "")
+    .replace(/\/.*$/, "");
 }
 
 export function buildShareUrl(origin: string, s: UserSettings): string {

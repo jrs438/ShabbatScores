@@ -46,7 +46,7 @@ export default function Page() {
       <div className="px-6 py-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
           <SportsGrid settings={ready ? settings : undefined} />
-          <SocialFeedCard />
+          <SocialFeedCard settings={ready ? settings : undefined} />
         </div>
       </div>
 
