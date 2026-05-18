@@ -33,6 +33,9 @@ function ensureScript(): Promise<void> {
 export default function XListCard({ listUrl }: { listUrl: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
+  // widgets.js still expects twitter.com hrefs; x.com sometimes silently fails.
+  const normalizedUrl = listUrl.replace(/^https?:\/\/x\.com/i, "https://twitter.com");
+
   useEffect(() => {
     let cancelled = false;
     ensureScript().then(() => {
@@ -42,7 +45,7 @@ export default function XListCard({ listUrl }: { listUrl: string }) {
     return () => {
       cancelled = true;
     };
-  }, [listUrl]);
+  }, [normalizedUrl]);
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-panel/80 p-2">
@@ -56,9 +59,9 @@ export default function XListCard({ listUrl }: { listUrl: string }) {
         <a
           className="twitter-timeline"
           data-theme="dark"
-          data-chrome="noheader nofooter noborders transparent"
+          data-chrome="noheader nofooter noborders"
           data-height="600"
-          href={listUrl}
+          href={normalizedUrl}
         >
           Loading feed…
         </a>
