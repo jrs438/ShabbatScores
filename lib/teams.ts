@@ -71,7 +71,7 @@ export const FOLLOWED_TEAMS: FollowedTeam[] = [
   {
     league: "nhl",
     sport: "hockey",
-    espnId: "1",
+    espnId: "11",
     abbr: "NJD",
     name: "Devils",
     displayName: "New Jersey Devils",
