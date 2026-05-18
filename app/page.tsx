@@ -10,6 +10,7 @@ import HebcalStripe from "@/components/HebcalStripe";
 import WeatherStripe from "@/components/WeatherStripe";
 import ScoreTickerBox from "@/components/ScoreTickerBox";
 import HelpDrawer from "@/components/HelpDrawer";
+import InstallHint from "@/components/InstallHint";
 import { useSettings } from "@/components/useSettings";
 
 export default function Page() {
@@ -19,6 +20,7 @@ export default function Page() {
 
   return (
     <main className="relative min-h-screen pb-20">
+      <InstallHint />
       <header className="flex flex-col gap-2 border-b border-zinc-800 bg-bg/95 px-6 pt-4 pb-3 backdrop-blur">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
