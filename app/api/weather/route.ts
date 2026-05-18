@@ -1,12 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import type { WeatherNow } from "@/lib/types";
 
 export const revalidate = 600;
 export const dynamic = "force-dynamic";
 
-// Paramus, NJ (07652)
-const LAT = 40.9445;
-const LON = -74.0754;
+const DEFAULT_LAT = 40.9445;
+const DEFAULT_LON = -74.0754;
 const UA = "ShabbatScores (contact: dashboard@example.com)";
 
 type PointsResp = {
@@ -32,6 +31,25 @@ type ForecastResp = {
   };
 };
 
+type GeoHit = { latitude: number; longitude: number };
+type GeoResp = { results?: GeoHit[] };
+
+async function zipToLatLon(zip: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?postal_code=${encodeURIComponent(
+      zip
+    )}&country=US&count=1`;
+    const res = await fetch(url, { next: { revalidate: 86400 } });
+    if (!res.ok) return null;
+    const data = (await res.json()) as GeoResp;
+    const hit = data.results?.[0];
+    if (!hit) return null;
+    return { lat: hit.latitude, lon: hit.longitude };
+  } catch {
+    return null;
+  }
+}
+
 async function nws<T>(url: string): Promise<T> {
   const res = await fetch(url, {
     headers: { "User-Agent": UA, Accept: "application/geo+json" },
@@ -41,9 +59,19 @@ async function nws<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const points = await nws<PointsResp>(`https://api.weather.gov/points/${LAT},${LON}`);
+    const zip = req.nextUrl.searchParams.get("zip");
+    let lat = DEFAULT_LAT;
+    let lon = DEFAULT_LON;
+    if (zip && /^\d{5}$/.test(zip) && zip !== "07652") {
+      const coords = await zipToLatLon(zip);
+      if (coords) {
+        lat = coords.lat;
+        lon = coords.lon;
+      }
+    }
+    const points = await nws<PointsResp>(`https://api.weather.gov/points/${lat},${lon}`);
     const forecast = await nws<ForecastResp>(points.properties.forecast);
     const periods = forecast.properties.periods;
     const current = periods[0];

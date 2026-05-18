@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import type { HebcalInfo } from "@/lib/types";
 
 export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
-// Hebcal Shabbat times for ZIP 07652 (Paramus, NJ).
-const HEBCAL_URL =
-  "https://www.hebcal.com/shabbat?cfg=json&zip=07652&M=on&geo=zip&lg=s";
+const DEFAULT_ZIP = "07652";
 const HDATE_URL = "https://www.hebcal.com/converter?cfg=json&g2h=1";
+const shabbatUrl = (zip: string) =>
+  `https://www.hebcal.com/shabbat?cfg=json&zip=${encodeURIComponent(
+    zip
+  )}&M=on&geo=zip&lg=s`;
 
 type HebcalItem = {
   title: string;
@@ -28,11 +30,13 @@ function fmtTime(iso: string): string {
   });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const zipParam = req.nextUrl.searchParams.get("zip");
+    const zip = zipParam && /^\d{5}$/.test(zipParam) ? zipParam : DEFAULT_ZIP;
     const todayISO = new Date().toISOString().slice(0, 10);
     const [shabbatRes, hdateRes] = await Promise.all([
-      fetch(HEBCAL_URL, { next: { revalidate: 3600 } }),
+      fetch(shabbatUrl(zip), { next: { revalidate: 3600 } }),
       fetch(`${HDATE_URL}&date=${todayISO}`, { next: { revalidate: 3600 } }),
     ]);
     if (!shabbatRes.ok || !hdateRes.ok) {

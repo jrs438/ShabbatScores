@@ -3,8 +3,28 @@ import { useEffect, useMemo, useState } from "react";
 import { usePolling } from "./usePolling";
 import FeaturedGameCard from "./FeaturedGameCard";
 import type { Game } from "@/lib/types";
+import type { UserSettings } from "@/lib/settings";
 
 type Resp = { games: Game[]; updatedAt?: string };
+
+function applySettings(games: Game[], settings: UserSettings | undefined): Game[] {
+  if (!settings) return games;
+  const followed = new Set(settings.followed);
+  const primary = new Set(settings.primary);
+  return games
+    .map((g) => {
+      const homeIn = followed.has(g.home.abbr);
+      const awayIn = followed.has(g.away.abbr);
+      const homePrimary = primary.has(g.home.abbr);
+      const awayPrimary = primary.has(g.away.abbr);
+      return {
+        ...g,
+        followed: homeIn || awayIn || g.isPlayoff,
+        primary: homePrimary || awayPrimary,
+      };
+    })
+    .filter((g) => g.followed);
+}
 
 function GameCard({ g, compact }: { g: Game; compact?: boolean }) {
   const live = g.status === "live";
@@ -100,9 +120,9 @@ function CyclingPanel({ games }: { games: Game[] }) {
   );
 }
 
-export default function SportsGrid() {
+export default function SportsGrid({ settings }: { settings?: UserSettings }) {
   const { data, lastFetched } = usePolling<Resp>("/api/sports", 30_000, { games: [] });
-  const games = data?.games ?? [];
+  const games = useMemo(() => applySettings(data?.games ?? [], settings), [data, settings]);
 
   const { featured, followedGames, leaguePlayoffs } = useMemo(() => {
     const sortByStart = (a: Game, b: Game) =>
