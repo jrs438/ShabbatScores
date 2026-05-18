@@ -48,10 +48,10 @@ export default function HebcalStripe({ settings }: { settings?: UserSettings }) 
           <span className="font-mono tabular-nums">{data.havdalah}</span>
         </span>
       )}
-      {data.hdate && <span className="text-xs text-zinc-500">{data.hdate}</span>}
       {secondaryHoliday && (
-        <span className="text-xs text-accent2">· {secondaryHoliday}</span>
+        <span className="text-xs font-semibold text-accent2">{secondaryHoliday}</span>
       )}
+      {data.hdate && <span className="text-xs text-zinc-500">{data.hdate}</span>}
     </div>
   );
 }
