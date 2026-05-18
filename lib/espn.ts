@@ -252,7 +252,12 @@ export async function getAllLeagueGamesToday(): Promise<Game[]> {
   return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }
 
-export async function getAllRelevantGames(): Promise<Game[]> {
+type GameFilter = {
+  followedIds?: Set<string>;
+  primaryIds?: Set<string>;
+};
+
+export async function getAllRelevantGames(filter?: GameFilter): Promise<Game[]> {
   const results = await Promise.allSettled(
     ALL_LEAGUES.map(async (league) => {
       try {
@@ -264,9 +269,21 @@ export async function getAllRelevantGames(): Promise<Game[]> {
       }
     })
   );
-  const games = results
-    .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
-    .filter((g) => g.followed || g.isPlayoff);
+  let games = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+
+  if (filter?.followedIds) {
+    const f = filter.followedIds;
+    const pr = filter.primaryIds ?? new Set<string>();
+    games = games
+      .map((g) => {
+        const followed = f.has(g.home.id) || f.has(g.away.id);
+        const primary = pr.has(g.home.id) || pr.has(g.away.id);
+        return { ...g, followed, primary };
+      })
+      .filter((g) => g.followed || g.isPlayoff);
+  } else {
+    games = games.filter((g) => g.followed || g.isPlayoff);
+  }
 
   // For any live primary-team game, also fetch the summary endpoint to enrich
   // it with situation data (inning/down/last play/win probability).

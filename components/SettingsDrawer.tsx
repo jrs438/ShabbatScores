@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { FOLLOWED_TEAMS, LEAGUE_LABEL } from "@/lib/teams";
+import TeamPicker from "./TeamPicker";
 import { buildShareUrl, type UserSettings } from "@/lib/settings";
 
 type Props = {
@@ -11,81 +11,28 @@ type Props = {
   onReset: () => void;
 };
 
-function TeamRow({
-  abbr,
-  name,
-  league,
-  isFollowed,
-  isPrimary,
-  onToggleFollow,
-  onTogglePrimary,
-}: {
-  abbr: string;
-  name: string;
-  league: string;
-  isFollowed: boolean;
-  isPrimary: boolean;
-  onToggleFollow: () => void;
-  onTogglePrimary: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-panel2 px-3 py-2">
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium">{name}</div>
-        <div className="text-[10px] uppercase tracking-wider text-zinc-500">{league}</div>
-      </div>
-      <div className="flex shrink-0 gap-2">
-        <button
-          onClick={onToggleFollow}
-          className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
-            isFollowed ? "bg-good/20 text-good" : "bg-zinc-800 text-zinc-500"
-          }`}
-        >
-          {isFollowed ? "Followed" : "Follow"}
-        </button>
-        <button
-          onClick={onTogglePrimary}
-          disabled={!isFollowed}
-          className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
-            isPrimary
-              ? "bg-accent2/30 text-accent2"
-              : "bg-zinc-800 text-zinc-500 disabled:opacity-40"
-          }`}
-        >
-          {isPrimary ? "★ Primary" : "☆ Primary"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function SettingsDrawer({ open, onClose, settings, onChange, onReset }: Props) {
   const [zipDraft, setZipDraft] = useState(settings.locationZip);
   const [labelDraft, setLabelDraft] = useState(settings.locationLabel);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
 
-  const followedSet = new Set(settings.followed);
-  const primarySet = new Set(settings.primary);
-
-  const toggleFollow = (abbr: string) => {
-    const next = new Set(followedSet);
-    if (next.has(abbr)) {
-      next.delete(abbr);
-      // Removing follow also removes primary
-      const np = new Set(primarySet);
-      np.delete(abbr);
-      onChange({ followed: Array.from(next), primary: Array.from(np) });
+  const toggleFollow = (id: string) => {
+    const f = new Set(settings.followed);
+    const p = new Set(settings.primary);
+    if (f.has(id)) {
+      f.delete(id);
+      p.delete(id);
     } else {
-      next.add(abbr);
-      onChange({ followed: Array.from(next) });
+      f.add(id);
     }
+    onChange({ followed: Array.from(f), primary: Array.from(p) });
   };
 
-  const togglePrimary = (abbr: string) => {
-    const next = new Set(primarySet);
-    if (next.has(abbr)) next.delete(abbr);
-    else next.add(abbr);
-    onChange({ primary: Array.from(next) });
+  const togglePrimary = (id: string) => {
+    const p = new Set(settings.primary);
+    if (p.has(id)) p.delete(id);
+    else p.add(id);
+    onChange({ primary: Array.from(p) });
   };
 
   const saveLocation = () => {
@@ -103,7 +50,6 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
       setCopyState("copied");
       setTimeout(() => setCopyState("idle"), 2000);
     } catch {
-      // Fallback: prompt the user
       window.prompt("Copy this URL:", url);
     }
   };
@@ -132,7 +78,7 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
             Location
           </h3>
           <p className="mb-3 text-xs text-zinc-500">
-            Used for weather forecast and Shabbat candle-lighting times.
+            Weather forecast and Shabbat candle-lighting times.
           </p>
           <div className="flex flex-col gap-2">
             <label className="text-[11px] uppercase tracking-wide text-zinc-500">
@@ -169,23 +115,23 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
             Teams
           </h3>
           <p className="mb-3 text-xs text-zinc-500">
-            <strong>Follow</strong> a team to see its games as cards.{" "}
-            <strong>Primary</strong> teams get a hero card with live gamecast detail when they're playing.
+            <span className="inline-flex items-center gap-1">
+              <span className="rounded bg-good/20 px-1 text-[10px] font-bold text-good">✓</span>
+              Followed
+            </span>{" "}
+            teams appear as cards.{" "}
+            <span className="inline-flex items-center gap-1">
+              <span className="rounded bg-accent2/30 px-1 text-[10px] font-bold text-accent2">★</span>
+              Primary
+            </span>{" "}
+            teams get the hero gamecast when they're live.
           </p>
-          <div className="flex flex-col gap-2">
-            {FOLLOWED_TEAMS.map((t) => (
-              <TeamRow
-                key={t.abbr}
-                abbr={t.abbr}
-                name={t.displayName}
-                league={LEAGUE_LABEL[t.league]}
-                isFollowed={followedSet.has(t.abbr)}
-                isPrimary={primarySet.has(t.abbr)}
-                onToggleFollow={() => toggleFollow(t.abbr)}
-                onTogglePrimary={() => togglePrimary(t.abbr)}
-              />
-            ))}
-          </div>
+          <TeamPicker
+            followed={settings.followed}
+            primary={settings.primary}
+            onToggleFollow={toggleFollow}
+            onTogglePrimary={togglePrimary}
+          />
         </section>
 
         <section className="border-t border-zinc-800 px-5 py-4">
@@ -193,8 +139,7 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
             Share
           </h3>
           <p className="mb-3 text-xs text-zinc-500">
-            Send a friend a link with your team picks and location pre-filled. Their dashboard
-            will save the picks the moment they open the link.
+            Send a friend a link with your team picks and location pre-filled.
           </p>
           <button
             onClick={copyShare}

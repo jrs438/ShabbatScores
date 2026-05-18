@@ -1,12 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getAllRelevantGames } from "@/lib/espn";
 
 export const revalidate = 30;
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+function idSet(value: string | null): Set<string> | undefined {
+  if (!value) return undefined;
+  const ids = value.split(",").map((s) => s.trim()).filter(Boolean);
+  return ids.length > 0 ? new Set(ids) : undefined;
+}
+
+export async function GET(req: NextRequest) {
   try {
-    const games = await getAllRelevantGames();
+    const followedIds = idSet(req.nextUrl.searchParams.get("teams"));
+    const primaryIds = idSet(req.nextUrl.searchParams.get("primary"));
+    const games = await getAllRelevantGames(
+      followedIds ? { followedIds, primaryIds } : undefined
+    );
     games.sort((a, b) => {
       const order = { live: 0, delayed: 1, scheduled: 2, final: 3, postponed: 4 } as const;
       const diff = order[a.status] - order[b.status];
