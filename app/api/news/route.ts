@@ -9,10 +9,15 @@ type Feed = { url: string; source: string; category: NewsItem["category"] };
 
 const FEEDS: Feed[] = [
   { url: "https://www.timesofisrael.com/feed/", source: "Times of Israel", category: "israel" },
-  { url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", source: "Jerusalem Post", category: "israel" },
-  { url: "https://feeds.apnews.com/apf-topnews", source: "AP", category: "us" },
-  { url: "https://feeds.apnews.com/apf-usnews", source: "AP US", category: "us" },
+  { url: "https://rss.jpost.com/rss/rssfeedsfrontpage.aspx", source: "Jerusalem Post", category: "israel" },
+  { url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", source: "BBC", category: "us" },
+  { url: "https://feeds.npr.org/1001/rss.xml", source: "NPR", category: "us" },
 ];
+
+function ensureArray<T>(x: T | T[] | undefined | null): T[] {
+  if (x == null) return [];
+  return Array.isArray(x) ? x : [x];
+}
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
 
@@ -43,10 +48,11 @@ async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
     if (!res.ok) return [];
     const xml = await res.text();
     const parsed = parser.parse(xml);
-    const items: RssItem[] =
+    const rawItems =
       parsed?.rss?.channel?.item ??
       parsed?.feed?.entry ??
-      [];
+      null;
+    const items: RssItem[] = ensureArray<RssItem>(rawItems);
     return items.slice(0, 8).map((it) => ({
       title: textOf(it.title) || "(untitled)",
       source: feed.source,

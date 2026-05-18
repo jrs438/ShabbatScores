@@ -3,6 +3,27 @@ import { FOLLOWED_TEAMS, LEAGUE_LABEL, LEAGUE_SPORT_PATH, LeagueKey } from "./te
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 
+function todayInEastern(): string {
+  // YYYYMMDD in America/New_York
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}${get("month")}${get("day")}`;
+}
+
+function easternDateString(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
 type EspnTeam = {
   id: string;
   abbreviation: string;
@@ -47,14 +68,19 @@ function mapStatus(state: string, name: string): GameStatus {
 }
 
 export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEvent[]> {
-  const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard`;
+  const date = todayInEastern();
+  const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
   const res = await fetch(url, {
     next: { revalidate: 30 },
     headers: { "User-Agent": "ShabbatScores/1.0" },
   });
   if (!res.ok) throw new Error(`ESPN ${league} responded ${res.status}`);
   const data = (await res.json()) as { events?: EspnEvent[] };
-  return data.events ?? [];
+  const today = todayInEastern();
+  return (data.events ?? []).filter((ev) => {
+    // Belt-and-suspenders: drop anything ESPN smuggles in from another day.
+    return easternDateString(ev.date).replace(/-/g, "") === today;
+  });
 }
 
 function isPlayoffEvent(league: LeagueKey, ev: EspnEvent): boolean {
