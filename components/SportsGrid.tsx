@@ -13,10 +13,10 @@ function applySettings(games: Game[], settings: UserSettings | undefined): Game[
   const primary = new Set(settings.primary);
   return games
     .map((g) => {
-      const homeIn = followed.has(g.home.abbr);
-      const awayIn = followed.has(g.away.abbr);
-      const homePrimary = primary.has(g.home.abbr);
-      const awayPrimary = primary.has(g.away.abbr);
+      const homeIn = followed.has(g.home.id);
+      const awayIn = followed.has(g.away.id);
+      const homePrimary = primary.has(g.home.id);
+      const awayPrimary = primary.has(g.away.id);
       return {
         ...g,
         followed: homeIn || awayIn || g.isPlayoff,
@@ -121,7 +121,16 @@ function CyclingPanel({ games }: { games: Game[] }) {
 }
 
 export default function SportsGrid({ settings }: { settings?: UserSettings }) {
-  const { data, lastFetched } = usePolling<Resp>("/api/sports", 30_000, { games: [] });
+  // Pass team IDs to the server so it knows which games to return (saves us
+  // pulling every game across every league).
+  const url = useMemo(() => {
+    if (!settings) return "/api/sports";
+    const params = new URLSearchParams();
+    if (settings.followed.length) params.set("teams", settings.followed.join(","));
+    if (settings.primary.length) params.set("primary", settings.primary.join(","));
+    return `/api/sports?${params.toString()}`;
+  }, [settings]);
+  const { data, lastFetched } = usePolling<Resp>(url, 30_000, { games: [] });
   const games = useMemo(() => applySettings(data?.games ?? [], settings), [data, settings]);
 
   const { featured, followedGames, leaguePlayoffs } = useMemo(() => {
