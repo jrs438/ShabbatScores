@@ -5,6 +5,7 @@ import {
   LEAGUE_SPORT_PATH,
   LeagueKey,
   PRIMARY_TEAM_ESPN_IDS,
+  teamFullId,
 } from "./teams";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
@@ -96,11 +97,11 @@ function isPlayoffEvent(_league: LeagueKey, ev: EspnEvent): boolean {
   return ev.season?.type === 3;
 }
 
-function teamFromCompetitor(c: EspnCompetitor) {
+function teamFromCompetitor(c: EspnCompetitor, league: LeagueKey) {
   const record = c.records?.find((r) => r.type === "total")?.summary ?? c.records?.[0]?.summary;
   const score = c.score === "" || c.score == null ? null : Number(c.score);
   return {
-    id: c.team.id,
+    id: teamFullId(league, c.team.id),
     name: c.team.shortDisplayName || c.team.displayName,
     abbr: c.team.abbreviation,
     score: Number.isFinite(score) ? score : null,
@@ -138,8 +139,8 @@ export function toGame(league: LeagueKey, ev: EspnEvent): Game {
     startTime: ev.date,
     period: ev.status.period != null ? String(ev.status.period) : null,
     clock: ev.status.displayClock ?? null,
-    home: teamFromCompetitor(home),
-    away: teamFromCompetitor(away),
+    home: teamFromCompetitor(home, league),
+    away: teamFromCompetitor(away, league),
     followed: followedHome || followedAway,
     primary: isPrimary,
     isPlayoff: playoff,

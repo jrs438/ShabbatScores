@@ -129,3 +129,9 @@ export const FOLLOWED_TEAM_ESPN_IDS = new Set(FOLLOWED_TEAMS.map((t) => t.espnId
 export const PRIMARY_TEAM_ESPN_IDS = new Set(
   FOLLOWED_TEAMS.filter((t) => t.primary).map((t) => t.espnId)
 );
+
+// Canonical, league-disambiguated team identifier. ESPN's team IDs are only
+// unique within a league (Mets MLB:21 vs whoever NBA:21 is), so we prefix.
+export function teamFullId(league: LeagueKey, espnId: string): string {
+  return `${league}:${espnId}`;
+}
