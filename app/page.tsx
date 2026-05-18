@@ -8,6 +8,7 @@ import SocialFeedCard from "@/components/SocialFeedCard";
 import SettingsDrawer from "@/components/SettingsDrawer";
 import HebcalStripe from "@/components/HebcalStripe";
 import WeatherStripe from "@/components/WeatherStripe";
+import ScoreTickerBox from "@/components/ScoreTickerBox";
 import { useSettings } from "@/components/useSettings";
 
 export default function Page() {
@@ -15,7 +16,7 @@ export default function Page() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <main className="relative min-h-screen pb-14">
+    <main className="relative min-h-screen pb-20">
       <header className="flex flex-col gap-2 border-b border-zinc-800 bg-bg/95 px-6 pt-4 pb-3 backdrop-blur">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -49,8 +50,13 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50">
-        <NewsTicker />
+      <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 border-t border-zinc-800 bg-panel/95">
+        <div className="w-[200px] shrink-0 border-r border-zinc-800">
+          <ScoreTickerBox />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <NewsTicker />
+        </div>
       </div>
 
       <SettingsDrawer

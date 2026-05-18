@@ -42,7 +42,7 @@ export default function NewsTicker() {
   const doubled = useMemo(() => [...items, ...items], [items]);
 
   return (
-    <div className="overflow-hidden border-t border-zinc-800 bg-panel/95 py-3">
+    <div className="flex h-full items-center overflow-hidden">
       <div className="ticker-track animate-ticker">
         {doubled.map((it, i) => (
           <span key={i} className="mx-8 inline-flex items-center gap-3 text-base">

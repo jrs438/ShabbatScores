@@ -235,6 +235,23 @@ const ALL_LEAGUES: LeagueKey[] = [
   "mens-college-basketball",
 ];
 
+// All games today across all leagues (no filtering). Used by the bottom
+// scoreticker box.
+export async function getAllLeagueGamesToday(): Promise<Game[]> {
+  const results = await Promise.allSettled(
+    ALL_LEAGUES.map(async (league) => {
+      try {
+        const events = await fetchLeagueScoreboard(league);
+        return events.map((ev) => toGame(league, ev));
+      } catch (e) {
+        console.error(`ESPN ${league} (ticker) failed`, e);
+        return [] as Game[];
+      }
+    })
+  );
+  return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+}
+
 export async function getAllRelevantGames(): Promise<Game[]> {
   const results = await Promise.allSettled(
     ALL_LEAGUES.map(async (league) => {
