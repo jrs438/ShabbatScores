@@ -89,13 +89,11 @@ export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEven
   });
 }
 
-function isPlayoffEvent(league: LeagueKey, ev: EspnEvent): boolean {
-  // seasonType 3 = playoffs in MLB/NBA/NHL, postseason in NFL
-  if (ev.season?.type === 3) return true;
-  const notes = ev.competitions[0]?.notes ?? [];
-  return notes.some((n) =>
-    /playoff|postseason|world series|stanley cup|conference final|championship/i.test(n.headline ?? "")
-  );
+function isPlayoffEvent(_league: LeagueKey, ev: EspnEvent): boolean {
+  // seasonType 3 = playoffs/postseason across MLB/NBA/NHL/NFL.
+  // (Previously also matched on notes headlines, but those triggered
+  // false positives on regular-season "championship standings" headlines.)
+  return ev.season?.type === 3;
 }
 
 function teamFromCompetitor(c: EspnCompetitor) {

@@ -77,7 +77,7 @@ function CyclingPanel({ games }: { games: Game[] }) {
     <div>
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-          Other games
+          Around the league · playoffs
         </h3>
         <div className="flex items-center gap-2 text-[10px] text-zinc-500">
           <span>
@@ -104,20 +104,23 @@ export default function SportsGrid() {
   const { data, lastFetched } = usePolling<Resp>("/api/sports", 30_000, { games: [] });
   const games = data?.games ?? [];
 
-  const { featured, primaryOther, otherGames } = useMemo(() => {
-    const primary = games.filter((g) => g.primary);
-    const liveOrFinal = (g: Game) => g.status === "live" || g.status === "final";
-    const featured = primary.find((g) => g.status === "live") ?? null;
-    // Primary games not featured: shown as small cards (today's not-yet-live + finals)
-    const primaryOther = primary.filter((g) => g !== featured);
-    const otherGames = games.filter((g) => !g.primary).sort((a, b) => {
-      const live = Number(b.status === "live") - Number(a.status === "live");
-      if (live !== 0) return live;
-      const fin = Number(liveOrFinal(b)) - Number(liveOrFinal(a));
-      if (fin !== 0) return fin;
-      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-    });
-    return { featured, primaryOther, otherGames };
+  const { featured, followedGames, leaguePlayoffs } = useMemo(() => {
+    const sortByStart = (a: Game, b: Game) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+    const sortByLiveness = (a: Game, b: Game) => {
+      const order = { live: 0, delayed: 1, scheduled: 2, final: 3, postponed: 4 } as const;
+      const d = order[a.status] - order[b.status];
+      return d !== 0 ? d : sortByStart(a, b);
+    };
+    const featured = games.find((g) => g.primary && g.status === "live") ?? null;
+    const followedGames = games
+      .filter((g) => g.followed && g !== featured)
+      .sort(sortByLiveness);
+    // Around-the-league: playoff games that don't involve any followed team.
+    const leaguePlayoffs = games
+      .filter((g) => !g.followed && g.isPlayoff)
+      .sort(sortByLiveness);
+    return { featured, followedGames, leaguePlayoffs };
   }, [games]);
 
   if (games.length === 0) {
@@ -146,15 +149,20 @@ export default function SportsGrid() {
 
       {featured && <FeaturedGameCard g={featured} />}
 
-      {primaryOther.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {primaryOther.map((g) => (
-            <GameCard key={g.id} g={g} />
-          ))}
+      {followedGames.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            Your teams
+          </h3>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {followedGames.map((g) => (
+              <GameCard key={g.id} g={g} />
+            ))}
+          </div>
         </div>
       )}
 
-      {otherGames.length > 0 && <CyclingPanel games={otherGames} />}
+      {leaguePlayoffs.length > 0 && <CyclingPanel games={leaguePlayoffs} />}
     </div>
   );
 }
