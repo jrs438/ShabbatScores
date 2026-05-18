@@ -28,6 +28,25 @@ function applySettings(games: Game[], settings: UserSettings | undefined): Game[
 
 function GameCard({ g, compact }: { g: Game; compact?: boolean }) {
   const live = g.status === "live";
+  if (compact) {
+    return (
+      <div
+        className={`relative rounded-xl border bg-panel/80 px-3 py-2 ${
+          live ? "border-bad/60" : "border-zinc-800"
+        }`}
+      >
+        <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wide text-zinc-400">
+          <span className="font-semibold text-zinc-300">{g.league}</span>
+          <span className="flex items-center gap-1.5">
+            {live && <span className="live-dot !h-1.5 !w-1.5" />}
+            <span className={live ? "font-semibold text-bad" : ""}>{g.statusDetail}</span>
+          </span>
+        </div>
+        <CompactTeamRow team={g.away} winner={isWinner(g, "away")} />
+        <CompactTeamRow team={g.home} winner={isWinner(g, "home")} />
+      </div>
+    );
+  }
   return (
     <div
       className={`relative rounded-2xl border bg-panel/80 px-4 py-3 ${
@@ -50,9 +69,26 @@ function GameCard({ g, compact }: { g: Game; compact?: boolean }) {
       </div>
       <TeamRow team={g.away} winner={isWinner(g, "away")} />
       <TeamRow team={g.home} winner={isWinner(g, "home")} />
-      {!compact && g.broadcast && (
+      {g.broadcast && (
         <div className="mt-1 text-[11px] text-zinc-500">{g.broadcast}</div>
       )}
+    </div>
+  );
+}
+
+function CompactTeamRow({ team, winner }: { team: Game["home"]; winner: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <div className="flex items-center gap-1.5">
+        {team.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={team.logo} alt="" className="h-4 w-4" />
+        )}
+        <span className="text-xs font-semibold">{team.abbr}</span>
+      </div>
+      <span className={`font-mono text-base tabular-nums ${winner ? "text-good" : ""}`}>
+        {team.score ?? "—"}
+      </span>
     </div>
   );
 }
@@ -183,11 +219,19 @@ export default function SportsGrid({ settings }: { settings?: UserSettings }) {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-500">
             Your teams
           </h3>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {followedGames.map((g) => (
-              <GameCard key={g.id} g={g} />
-            ))}
-          </div>
+          {featured ? (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+              {followedGames.map((g) => (
+                <GameCard key={g.id} g={g} compact />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {followedGames.map((g) => (
+                <GameCard key={g.id} g={g} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
