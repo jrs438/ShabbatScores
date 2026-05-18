@@ -9,11 +9,13 @@ import SettingsDrawer from "@/components/SettingsDrawer";
 import HebcalStripe from "@/components/HebcalStripe";
 import WeatherStripe from "@/components/WeatherStripe";
 import ScoreTickerBox from "@/components/ScoreTickerBox";
+import HelpDrawer from "@/components/HelpDrawer";
 import { useSettings } from "@/components/useSettings";
 
 export default function Page() {
   const { settings, update, reset, ready } = useSettings();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   return (
     <main className="relative min-h-screen pb-20">
@@ -23,7 +25,18 @@ export default function Page() {
             <h1 className="text-xl font-bold tracking-tight">ShabbatScores</h1>
             <WakeLockBadge />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setHelpOpen(true)}
+              aria-label="How to use this dashboard"
+              className="rounded-md p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </button>
             <button
               onClick={() => setDrawerOpen(true)}
               aria-label="Settings"
@@ -66,6 +79,8 @@ export default function Page() {
         onChange={update}
         onReset={reset}
       />
+
+      <HelpDrawer open={helpOpen} onClose={() => setHelpOpen(false)} />
     </main>
   );
 }
