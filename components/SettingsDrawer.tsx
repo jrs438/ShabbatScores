@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import TeamPicker from "./TeamPicker";
+import SocialSourcesEditor from "./SocialSourcesEditor";
 import { buildShareUrl, type UserSettings } from "@/lib/settings";
 
 type Props = {
@@ -131,6 +132,21 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
             primary={settings.primary}
             onToggleFollow={toggleFollow}
             onTogglePrimary={togglePrimary}
+          />
+        </section>
+
+        <section className="border-t border-zinc-800 px-5 py-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+            Social feed
+          </h3>
+          <p className="mb-3 text-xs text-zinc-500">
+            Telegram public channels and Bluesky accounts shown in the right-hand feed card.
+            Both are free and update automatically; no logins required.
+          </p>
+          <SocialSourcesEditor
+            telegramChannels={settings.telegramChannels}
+            blueskyHandles={settings.blueskyHandles}
+            onChange={onChange}
           />
         </section>
 

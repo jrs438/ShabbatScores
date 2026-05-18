@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { usePolling } from "./usePolling";
 import type { SocialPost } from "@/lib/telegram";
+import type { UserSettings } from "@/lib/settings";
 
 type Resp = { posts: SocialPost[]; updatedAt?: string };
 
@@ -73,8 +74,16 @@ function PostItem({ p }: { p: SocialPost }) {
   );
 }
 
-export default function SocialFeedCard() {
-  const { data, lastFetched } = usePolling<Resp>("/api/social", 120_000, { posts: [] });
+export default function SocialFeedCard({ settings }: { settings?: UserSettings }) {
+  const url = useMemo(() => {
+    if (!settings) return "/api/social";
+    const params = new URLSearchParams();
+    if (settings.telegramChannels.length) params.set("tg", settings.telegramChannels.join(","));
+    if (settings.blueskyHandles.length) params.set("bs", settings.blueskyHandles.join(","));
+    const q = params.toString();
+    return q ? `/api/social?${q}` : "/api/social";
+  }, [settings]);
+  const { data, lastFetched } = usePolling<Resp>(url, 120_000, { posts: [] });
   const posts = data?.posts ?? [];
 
   const grouped = useMemo(() => posts, [posts]);
