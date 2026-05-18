@@ -80,7 +80,7 @@ export default function SocialFeedCard() {
   const grouped = useMemo(() => posts, [posts]);
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-panel/80 p-3">
+    <div className="sticky top-4 rounded-2xl border border-zinc-800 bg-panel/80 p-3">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Social feed
@@ -96,7 +96,7 @@ export default function SocialFeedCard() {
       </div>
       <div
         className="flex flex-col gap-3 overflow-y-auto pr-1"
-        style={{ maxHeight: 600 }}
+        style={{ maxHeight: "calc(100vh - 240px)" }}
       >
         {grouped.length === 0 ? (
           <div className="py-8 text-center text-sm text-zinc-500">Loading feed…</div>
