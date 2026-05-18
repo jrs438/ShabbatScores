@@ -1,9 +1,11 @@
 "use client";
 import { usePolling } from "./usePolling";
 import type { HebcalInfo } from "@/lib/types";
+import type { UserSettings } from "@/lib/settings";
 
-export default function HebcalCard() {
-  const { data } = usePolling<HebcalInfo>("/api/hebcal", 60 * 60_000);
+export default function HebcalCard({ settings }: { settings?: UserSettings }) {
+  const zip = settings?.locationZip ?? "07652";
+  const { data } = usePolling<HebcalInfo>(`/api/hebcal?zip=${zip}`, 60 * 60_000);
   if (!data || !("parashah" in data)) {
     return (
       <div className="rounded-2xl border border-zinc-800 bg-panel/60 p-4 text-zinc-500">

@@ -1,9 +1,11 @@
 "use client";
 import { usePolling } from "./usePolling";
 import type { WeatherNow } from "@/lib/types";
+import type { UserSettings } from "@/lib/settings";
 
-export default function WeatherCard() {
-  const { data } = usePolling<WeatherNow>("/api/weather", 10 * 60_000);
+export default function WeatherCard({ settings }: { settings?: UserSettings }) {
+  const zip = settings?.locationZip ?? "07652";
+  const { data } = usePolling<WeatherNow>(`/api/weather?zip=${zip}`, 10 * 60_000);
   if (!data || !("temp" in data)) {
     return (
       <div className="rounded-2xl border border-zinc-800 bg-panel/60 p-4 text-zinc-500">
@@ -14,7 +16,9 @@ export default function WeatherCard() {
   return (
     <div className="rounded-2xl border border-zinc-800 bg-panel/80 p-4">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Paramus, NJ</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+          {settings?.locationLabel ?? "Paramus, NJ"}
+        </h2>
         <span className="text-[10px] text-zinc-600">NWS</span>
       </div>
       <div className="flex items-baseline gap-3">
