@@ -4,11 +4,9 @@ import WeatherCard from "@/components/WeatherCard";
 import HebcalCard from "@/components/HebcalCard";
 import NewsTicker from "@/components/NewsTicker";
 import WakeLockBadge from "@/components/WakeLockBadge";
-import XListCard from "@/components/XListCard";
+import SocialFeedCard from "@/components/SocialFeedCard";
 
 export const dynamic = "force-dynamic";
-
-const X_LIST_URL = "https://x.com/i/lists/2056354826745774162";
 
 export default function Page() {
   return (
@@ -27,7 +25,7 @@ export default function Page() {
           <div className="flex flex-col gap-4">
             <HebcalCard />
             <WeatherCard />
-            <XListCard listUrl={X_LIST_URL} />
+            <SocialFeedCard />
           </div>
         </div>
       </div>
