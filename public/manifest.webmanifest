@@ -1,0 +1,10 @@
+{
+  "name": "ShabbatScores",
+  "short_name": "ShabbatScores",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": []
+}
