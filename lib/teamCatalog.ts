@@ -1,4 +1,4 @@
-import { LEAGUE_SPORT_PATH, type LeagueKey } from "./teams";
+import { LEAGUE_SPORT_PATH, teamFullId, type LeagueKey } from "./teams";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 
@@ -44,7 +44,7 @@ async function fetchLeagueCatalog(league: LeagueKey): Promise<CatalogTeam[]> {
   return teams.map((t) => {
     const team = t.team;
     return {
-      id: team.id,
+      id: teamFullId(league, team.id),
       league,
       abbr: team.abbreviation ?? "",
       name: team.shortDisplayName ?? team.name ?? team.displayName ?? "",

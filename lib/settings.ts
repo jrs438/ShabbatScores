@@ -1,4 +1,4 @@
-import { FOLLOWED_TEAMS } from "./teams";
+import { FOLLOWED_TEAMS, teamFullId } from "./teams";
 
 export type UserSettings = {
   // ESPN team IDs (globally unique across leagues).
@@ -11,26 +11,65 @@ export type UserSettings = {
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  primary: ["21", "20", "18", "13"], // Mets, Jets, Knicks, Rangers
-  followed: FOLLOWED_TEAMS.map((t) => t.espnId),
+  primary: [
+    teamFullId("mlb", "21"), // Mets
+    teamFullId("nfl", "20"), // Jets
+    teamFullId("nba", "18"), // Knicks
+    teamFullId("nhl", "13"), // Rangers
+  ],
+  followed: FOLLOWED_TEAMS.map((t) => teamFullId(t.league, t.espnId)),
   locationZip: "07652",
   locationLabel: "Paramus, NJ",
   telegramChannels: ["osint613"],
   blueskyHandles: [],
 };
 
-const STORAGE_KEY = "shabbatscores:settings:v2";
-const LEGACY_KEY = "shabbatscores:settings:v1";
+const STORAGE_KEY = "shabbatscores:settings:v3";
+const V2_KEY = "shabbatscores:settings:v2"; // bare-ID era (buggy across leagues)
+const V1_KEY = "shabbatscores:settings:v1"; // abbreviation era
 
-// Map old abbreviation-based settings to the new ID-based format.
-const ABBR_TO_ID: Record<string, string> = Object.fromEntries(
-  FOLLOWED_TEAMS.map((t) => [t.abbr, t.espnId])
+// Mappings to migrate older storage formats into the league-prefixed format.
+const ABBR_TO_FULL: Record<string, string> = Object.fromEntries(
+  FOLLOWED_TEAMS.map((t) => [t.abbr, teamFullId(t.league, t.espnId)])
 );
-function migrateAbbrs(values: string[] | undefined): string[] | undefined {
+const BARE_TO_FULL: Record<string, string> = Object.fromEntries(
+  FOLLOWED_TEAMS.map((t) => [t.espnId, teamFullId(t.league, t.espnId)])
+);
+
+function migrateIds(values: string[] | undefined): string[] | undefined {
   if (!values) return values;
-  return values
-    .map((v) => (ABBR_TO_ID[v] ? ABBR_TO_ID[v] : /^\d+$/.test(v) ? v : null))
-    .filter((v): v is string => v != null);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) {
+    // Already prefixed (league:id)
+    if (v.includes(":")) {
+      if (!seen.has(v)) {
+        seen.add(v);
+        out.push(v);
+      }
+      continue;
+    }
+    // Try abbreviation map
+    if (ABBR_TO_FULL[v]) {
+      const full = ABBR_TO_FULL[v];
+      if (!seen.has(full)) {
+        seen.add(full);
+        out.push(full);
+      }
+      continue;
+    }
+    // Try bare ESPN id from the known default roster
+    if (BARE_TO_FULL[v]) {
+      const full = BARE_TO_FULL[v];
+      if (!seen.has(full)) {
+        seen.add(full);
+        out.push(full);
+      }
+      continue;
+    }
+    // Unknown bare id — can't disambiguate which league it belonged to; drop.
+  }
+  return out;
 }
 
 export function loadSettings(): UserSettings {
@@ -41,18 +80,20 @@ export function loadSettings(): UserSettings {
       const parsed = JSON.parse(raw) as Partial<UserSettings>;
       return { ...DEFAULT_SETTINGS, ...parsed };
     }
-    // One-time migration from v1 (abbreviation-based) to v2 (ID-based).
-    const legacy = window.localStorage.getItem(LEGACY_KEY);
-    if (legacy) {
-      const parsed = JSON.parse(legacy) as Partial<UserSettings>;
+    // Try to migrate from older storage formats (v2 bare ids, v1 abbrs).
+    const older =
+      window.localStorage.getItem(V2_KEY) ?? window.localStorage.getItem(V1_KEY);
+    if (older) {
+      const parsed = JSON.parse(older) as Partial<UserSettings>;
       const migrated: UserSettings = {
         ...DEFAULT_SETTINGS,
         ...parsed,
-        primary: migrateAbbrs(parsed.primary) ?? DEFAULT_SETTINGS.primary,
-        followed: migrateAbbrs(parsed.followed) ?? DEFAULT_SETTINGS.followed,
+        primary: migrateIds(parsed.primary) ?? DEFAULT_SETTINGS.primary,
+        followed: migrateIds(parsed.followed) ?? DEFAULT_SETTINGS.followed,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-      window.localStorage.removeItem(LEGACY_KEY);
+      window.localStorage.removeItem(V2_KEY);
+      window.localStorage.removeItem(V1_KEY);
       return migrated;
     }
     return DEFAULT_SETTINGS;
@@ -95,8 +136,8 @@ export function settingsFromQuery(search: string): Partial<UserSettings> | null 
   const l = params.get("l");
   const tg = params.get("tg");
   const bs = params.get("bs");
-  if (p) out.primary = migrateAbbrs(p.split(",").filter(Boolean));
-  if (f) out.followed = migrateAbbrs(f.split(",").filter(Boolean));
+  if (p) out.primary = migrateIds(p.split(",").filter(Boolean));
+  if (f) out.followed = migrateIds(f.split(",").filter(Boolean));
   if (z) out.locationZip = z;
   if (l) out.locationLabel = l;
   if (tg) out.telegramChannels = tg.split(",").filter(Boolean);
