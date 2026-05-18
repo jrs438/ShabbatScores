@@ -11,16 +11,16 @@ function TeamBlock({
   hasBall?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1">
       {team.logo && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={team.logo} alt="" className="h-16 w-16" />
+        <img src={team.logo} alt="" className="h-12 w-12" />
       )}
       <div className="text-center">
-        <div className={`text-xl font-bold ${winner ? "text-good" : ""}`}>{team.name}</div>
-        {team.record && <div className="text-xs text-zinc-500">{team.record}</div>}
+        <div className={`text-base font-bold ${winner ? "text-good" : ""}`}>{team.name}</div>
+        {team.record && <div className="text-[10px] text-zinc-500">{team.record}</div>}
       </div>
-      <div className={`font-mono text-6xl tabular-nums ${winner ? "text-good" : ""}`}>
+      <div className={`font-mono text-4xl tabular-nums ${winner ? "text-good" : ""}`}>
         {team.score ?? "—"}
         {hasBall && <span className="ml-1 text-accent2">●</span>}
       </div>
@@ -66,8 +66,8 @@ export default function FeaturedGameCard({ g }: { g: Game }) {
   const d = g.detail;
 
   return (
-    <div className="rounded-2xl border-2 border-bad/60 bg-gradient-to-br from-panel via-panel2 to-panel p-5 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-2xl border-2 border-bad/60 bg-gradient-to-br from-panel via-panel2 to-panel p-4 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="live-dot" />
           <span className="font-bold text-bad uppercase tracking-wider">{g.statusDetail}</span>
@@ -83,7 +83,7 @@ export default function FeaturedGameCard({ g }: { g: Game }) {
         {g.broadcast && <span className="text-xs text-zinc-500">{g.broadcast}</span>}
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
         <TeamBlock
           team={g.away}
           winner={isWinner("away")}
@@ -122,9 +122,9 @@ export default function FeaturedGameCard({ g }: { g: Game }) {
       </div>
 
       {d?.lastPlay && (
-        <div className="mt-4 rounded-lg bg-bg/60 p-3 text-sm">
-          <div className="mb-1 text-[10px] uppercase tracking-wider text-zinc-500">Last play</div>
-          <div className="text-zinc-200">{d.lastPlay}</div>
+        <div className="mt-3 rounded-lg bg-bg/60 p-2 text-xs">
+          <div className="mb-0.5 text-[10px] uppercase tracking-wider text-zinc-500">Last play</div>
+          <div className="line-clamp-2 text-zinc-200">{d.lastPlay}</div>
         </div>
       )}
 

@@ -16,9 +16,15 @@ export default function HebcalStripe({ settings }: { settings?: UserSettings }) 
     );
   }
 
+  // When the upcoming Shabbat coincides with a holiday (no parashah), the
+  // holiday name itself is the "what's happening" label. Otherwise show the
+  // parashah and demote the holiday to a footnote.
+  const primaryLabel = data.parashah ?? data.holidays[0] ?? null;
+  const secondaryHoliday = data.parashah ? data.holidays[0] : data.holidays[1];
+
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm ${
+      className={`flex flex-wrap items-center gap-3 rounded-lg px-3 py-1.5 text-sm ${
         data.isShabbat ? "bg-accent2/15 ring-1 ring-accent2/40" : "bg-panel2/60"
       }`}
     >
@@ -27,8 +33,8 @@ export default function HebcalStripe({ settings }: { settings?: UserSettings }) 
           Shabbat now
         </span>
       )}
-      {data.parashah && (
-        <span className="font-semibold text-zinc-200">{data.parashah}</span>
+      {primaryLabel && (
+        <span className="font-semibold text-zinc-200">{primaryLabel}</span>
       )}
       {data.candleLighting && (
         <span className="flex items-center gap-1 text-zinc-300">
@@ -43,8 +49,8 @@ export default function HebcalStripe({ settings }: { settings?: UserSettings }) 
         </span>
       )}
       {data.hdate && <span className="text-xs text-zinc-500">{data.hdate}</span>}
-      {data.holidays.length > 0 && (
-        <span className="text-xs text-accent2">· {data.holidays[0]}</span>
+      {secondaryHoliday && (
+        <span className="text-xs text-accent2">· {secondaryHoliday}</span>
       )}
     </div>
   );
