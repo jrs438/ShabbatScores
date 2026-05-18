@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default function Page() {
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="relative min-h-screen pb-14">
       <header className="flex items-center justify-between gap-4 px-6 pt-5 pb-3">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight">ShabbatScores</h1>
@@ -18,7 +18,7 @@ export default function Page() {
         <Clock />
       </header>
 
-      <div className="flex-1 px-6 pb-4">
+      <div className="px-6 pb-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
           <SportsGrid />
           <div className="flex flex-col gap-4">
@@ -28,7 +28,9 @@ export default function Page() {
         </div>
       </div>
 
-      <NewsTicker />
+      <div className="fixed inset-x-0 bottom-0 z-50">
+        <NewsTicker />
+      </div>
     </main>
   );
 }

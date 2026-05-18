@@ -50,6 +50,7 @@ export async function fetchSerpScore(query: string): Promise<Partial<Game> | nul
       period: null,
       clock: null,
       home: {
+        id: "",
         name: home.name ?? "",
         abbr: (home.name ?? "").slice(0, 3).toUpperCase(),
         score: home.score != null ? Number(home.score) : null,
@@ -57,6 +58,7 @@ export async function fetchSerpScore(query: string): Promise<Partial<Game> | nul
         record: home.record,
       },
       away: {
+        id: "",
         name: away.name ?? "",
         abbr: (away.name ?? "").slice(0, 3).toUpperCase(),
         score: away.score != null ? Number(away.score) : null,
@@ -64,6 +66,7 @@ export async function fetchSerpScore(query: string): Promise<Partial<Game> | nul
         record: away.record,
       },
       followed: true,
+      primary: false,
       isPlayoff: false,
       venue: spot.venue,
     };

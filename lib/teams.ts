@@ -16,6 +16,7 @@ export type FollowedTeam = {
   name: string;
   displayName: string;
   serpQuery: string;
+  primary?: boolean;
 };
 
 export const FOLLOWED_TEAMS: FollowedTeam[] = [
@@ -27,6 +28,7 @@ export const FOLLOWED_TEAMS: FollowedTeam[] = [
     name: "Mets",
     displayName: "New York Mets",
     serpQuery: "New York Mets",
+    primary: true,
   },
   {
     league: "mlb",
@@ -45,6 +47,7 @@ export const FOLLOWED_TEAMS: FollowedTeam[] = [
     name: "Jets",
     displayName: "New York Jets",
     serpQuery: "New York Jets",
+    primary: true,
   },
   {
     league: "nfl",
@@ -63,6 +66,7 @@ export const FOLLOWED_TEAMS: FollowedTeam[] = [
     name: "Rangers",
     displayName: "New York Rangers",
     serpQuery: "New York Rangers",
+    primary: true,
   },
   {
     league: "nhl",
@@ -81,6 +85,7 @@ export const FOLLOWED_TEAMS: FollowedTeam[] = [
     name: "Knicks",
     displayName: "New York Knicks",
     serpQuery: "New York Knicks",
+    primary: true,
   },
   {
     league: "college-football",
@@ -121,3 +126,6 @@ export const LEAGUE_LABEL: Record<LeagueKey, string> = {
 };
 
 export const FOLLOWED_TEAM_ESPN_IDS = new Set(FOLLOWED_TEAMS.map((t) => t.espnId));
+export const PRIMARY_TEAM_ESPN_IDS = new Set(
+  FOLLOWED_TEAMS.filter((t) => t.primary).map((t) => t.espnId)
+);
