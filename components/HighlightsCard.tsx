@@ -99,6 +99,7 @@ export default function HighlightsCard({ settings }: { settings?: UserSettings }
     }
   };
 
+  if (settings && settings.videoHighlights === false) return null;
   if (highlights.length === 0) return null;
 
   const active = highlights[idx % highlights.length];
