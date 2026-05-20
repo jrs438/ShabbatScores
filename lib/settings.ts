@@ -8,6 +8,7 @@ export type UserSettings = {
   locationLabel: string;
   telegramChannels: string[]; // handles, e.g. ["osint613"]
   blueskyHandles: string[]; // handles, e.g. ["avivaklompas.bsky.social"]
+  videoHighlights: boolean;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   locationLabel: "Paramus, NJ",
   telegramChannels: ["osint613"],
   blueskyHandles: [],
+  videoHighlights: true,
 };
 
 const STORAGE_KEY = "shabbatscores:settings:v3";
@@ -123,6 +125,7 @@ export function settingsToQuery(s: UserSettings): string {
   }
   if (s.telegramChannels.length > 0) params.set("tg", s.telegramChannels.join(","));
   if (s.blueskyHandles.length > 0) params.set("bs", s.blueskyHandles.join(","));
+  if (!s.videoHighlights) params.set("vh", "0");
   return params.toString();
 }
 
@@ -142,6 +145,9 @@ export function settingsFromQuery(search: string): Partial<UserSettings> | null 
   if (l) out.locationLabel = l;
   if (tg) out.telegramChannels = tg.split(",").filter(Boolean);
   if (bs) out.blueskyHandles = bs.split(",").filter(Boolean);
+  const vh = params.get("vh");
+  if (vh === "0") out.videoHighlights = false;
+  if (vh === "1") out.videoHighlights = true;
   return Object.keys(out).length > 0 ? out : null;
 }
 

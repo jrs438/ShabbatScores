@@ -137,6 +137,33 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
 
         <section className="border-t border-zinc-800 px-5 py-4">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+            Video highlights
+          </h3>
+          <p className="mb-3 text-xs text-zinc-500">
+            Auto-playing muted highlight clips from MLB / NBA / NFL / NHL / ESPN. Turn this off if
+            you prefer no video on the dashboard for Shabbat observance.
+          </p>
+          <button
+            onClick={() => onChange({ videoHighlights: !settings.videoHighlights })}
+            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold ${
+              settings.videoHighlights
+                ? "bg-good/20 text-good"
+                : "bg-zinc-800 text-zinc-300"
+            }`}
+          >
+            <span>Video highlights card</span>
+            <span
+              className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                settings.videoHighlights ? "bg-good/30" : "bg-zinc-700"
+              }`}
+            >
+              {settings.videoHighlights ? "On" : "Off"}
+            </span>
+          </button>
+        </section>
+
+        <section className="border-t border-zinc-800 px-5 py-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
             Social feed
           </h3>
           <p className="mb-3 text-xs text-zinc-500">
