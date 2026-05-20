@@ -75,6 +75,12 @@ export default function HelpDrawer({ open, onClose }: Props) {
               show as smaller cards. Around-the-league playoff games cycle every 7 seconds.
             </li>
             <li>
+              <strong>Live highlights (right sidebar, optional):</strong> Auto-playing muted clips
+              from MLB / NBA / NFL / NHL / ESPN for your <strong>Primary</strong> teams. Plays
+              the newest clip, advances when it ends. Can be turned off in Settings for Shabbat
+              observance.
+            </li>
+            <li>
               <strong>Social feed (right sidebar):</strong> 10 most recent posts from your Telegram
               channels and Bluesky accounts. Cycles 2 posts at a time every 12 seconds.
             </li>
@@ -95,10 +101,16 @@ export default function HelpDrawer({ open, onClose }: Props) {
               is Paramus, NJ (07652).
             </li>
             <li>
+              <strong>Video highlights:</strong> On/off toggle for the auto-playing video card.
+              Default is on. Off hides the card and skips loading any YouTube content — useful
+              for Shabbat observance.
+            </li>
+            <li>
               <strong>Teams:</strong> Search ~500 ESPN teams across MLB, NFL, NBA, NHL, college
               football, and college basketball. Toggle <span className="rounded bg-good/20 px-1 py-0.5 text-[10px] font-bold text-good">✓</span>
               {" "}to follow a team (shows as a card). Toggle <span className="rounded bg-accent2/30 px-1 py-0.5 text-[10px] font-bold text-accent2">★</span>
-              {" "}to make it Primary (hero gamecast when playing live).
+              {" "}to make it Primary — hero gamecast when playing live, and what drives the live
+              highlights card.
             </li>
             <li>
               <strong>Social feed:</strong> Add any public Telegram channel handle (e.g.
