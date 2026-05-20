@@ -29,6 +29,7 @@ const CHANNEL_LEAGUES: Record<string, LeagueKey[]> = {
 export type Highlight = {
   id: string;
   title: string;
+  description: string;
   thumbnail: string;
   publishedAt: string;
   channel: string;
@@ -47,7 +48,7 @@ type YtEntry = {
   published?: string;
   "media:group"?: {
     "media:thumbnail"?: { "@_url"?: string };
-    "media:description"?: string;
+    "media:description"?: string | { "#text"?: string };
   };
 };
 
@@ -76,6 +77,7 @@ async function fetchChannelHighlights(channelId: string, label: string): Promise
       .map((e) => ({
         id: e["yt:videoId"] ?? "",
         title: textOf(e.title) || "",
+        description: textOf(e["media:group"]?.["media:description"]) || "",
         thumbnail: e["media:group"]?.["media:thumbnail"]?.["@_url"] ?? "",
         publishedAt: e.published ?? "",
         channel: label,
@@ -137,9 +139,13 @@ export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
   const videoMatches = (h: Highlight): boolean => {
     const allowedLeagues = CHANNEL_LEAGUES[h.channel] ?? [];
     if (allowedLeagues.length === 0) return false;
+    // Match against title + description because per-play clips usually have
+    // a player name in the title and only mention the team in the description
+    // (e.g. "Pete Alonso's 2-run HR" / description: "...for the New York Mets").
+    const haystack = `${h.title}\n${h.description}`;
     for (const t of teamMatches) {
       if (!allowedLeagues.includes(t.league)) continue;
-      if (t.patterns.some((re) => re.test(h.title))) return true;
+      if (t.patterns.some((re) => re.test(haystack))) return true;
     }
     return false;
   };
