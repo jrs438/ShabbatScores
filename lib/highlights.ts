@@ -1,13 +1,15 @@
 import { XMLParser } from "fast-xml-parser";
 import { getFullCatalog } from "./teamCatalog";
 
-// Official league YouTube channels. They post recap and highlight clips
-// throughout games — typically 2-10 minutes behind live.
+// Official league + general sports highlight channels. Each posts clips
+// throughout games; together they cover most major-team highlights.
 const LEAGUE_CHANNELS: { id: string; label: string }[] = [
   { id: "UCoLrcjPV5PbUrUyXq5mjc_A", label: "MLB" },
   { id: "UCWJ2lWNubArHWmf3FIHbfcQ", label: "NBA" },
   { id: "UCDVYQ4Zhbm3S2dlz7P1GBDg", label: "NFL" },
   { id: "UCqFMzb-4AUf6WAIbl132QKA", label: "NHL" },
+  { id: "UCiWLfSweyRNmLpgEHekhoAg", label: "ESPN" },
+  { id: "UCqQo7ewe87aYAe7ub5UqXMw", label: "HoH" }, // House of Highlights (mostly NBA)
 ];
 
 export type Highlight = {
@@ -90,9 +92,10 @@ export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
         if (!t) continue;
         if (t.name) names.add(t.name);
         if (t.displayName) names.add(t.displayName);
+        if (t.abbr && t.abbr.length >= 2) names.add(t.abbr);
       }
       teamPatterns = Array.from(names)
-        .filter((n) => n.length >= 3)
+        .filter((n) => n.length >= 2)
         .map((n) => new RegExp(`\\b${escapeRegex(n)}\\b`, "i"));
     } catch (err) {
       console.error("catalog lookup for highlights failed", err);
@@ -104,9 +107,8 @@ export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
   );
   const all = lists.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 
-  // Only keep videos posted in the last 36 hours so Shabbat-night use sees
-  // recent clips, not week-old recaps.
-  const cutoff = Date.now() - 36 * 60 * 60 * 1000;
+  // Last 48 hours so the pool is large enough during slow days.
+  const cutoff = Date.now() - 48 * 60 * 60 * 1000;
   const recent = all.filter((h) => {
     const ts = new Date(h.publishedAt).getTime();
     return !Number.isNaN(ts) && ts >= cutoff;
@@ -116,8 +118,16 @@ export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
     ? recent.filter((h) => teamPatterns.some((re) => re.test(h.title)))
     : recent;
 
-  matching.sort(
+  // Dedupe by video ID (some clips appear on multiple channels)
+  const seen = new Set<string>();
+  const unique = matching.filter((h) => {
+    if (seen.has(h.id)) return false;
+    seen.add(h.id);
+    return true;
+  });
+
+  unique.sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
-  return matching.slice(0, 12);
+  return unique.slice(0, 20);
 }
