@@ -113,35 +113,15 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
 
         <section className="border-t border-zinc-800 px-5 py-4">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
-            Teams
+            Video highlights
           </h3>
           <p className="mb-3 text-xs text-zinc-500">
-            <span className="inline-flex items-center gap-1">
-              <span className="rounded bg-good/20 px-1 text-[10px] font-bold text-good">✓</span>
-              Followed
-            </span>{" "}
-            teams appear as cards.{" "}
+            Auto-playing muted highlight clips from MLB / NBA / NFL / NHL / ESPN for your{" "}
             <span className="inline-flex items-center gap-1">
               <span className="rounded bg-accent2/30 px-1 text-[10px] font-bold text-accent2">★</span>
               Primary
             </span>{" "}
-            teams get the hero gamecast when they're live.
-          </p>
-          <TeamPicker
-            followed={settings.followed}
-            primary={settings.primary}
-            onToggleFollow={toggleFollow}
-            onTogglePrimary={togglePrimary}
-          />
-        </section>
-
-        <section className="border-t border-zinc-800 px-5 py-4">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
-            Video highlights
-          </h3>
-          <p className="mb-3 text-xs text-zinc-500">
-            Auto-playing muted highlight clips from MLB / NBA / NFL / NHL / ESPN. Turn this off if
-            you prefer no video on the dashboard for Shabbat observance.
+            teams only. Turn off if you prefer no video on the dashboard for Shabbat observance.
           </p>
           <button
             onClick={() => onChange({ videoHighlights: !settings.videoHighlights })}
@@ -160,6 +140,30 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
               {settings.videoHighlights ? "On" : "Off"}
             </span>
           </button>
+        </section>
+
+        <section className="border-t border-zinc-800 px-5 py-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+            Teams
+          </h3>
+          <p className="mb-3 text-xs text-zinc-500">
+            <span className="inline-flex items-center gap-1">
+              <span className="rounded bg-good/20 px-1 text-[10px] font-bold text-good">✓</span>
+              Followed
+            </span>{" "}
+            teams appear as cards.{" "}
+            <span className="inline-flex items-center gap-1">
+              <span className="rounded bg-accent2/30 px-1 text-[10px] font-bold text-accent2">★</span>
+              Primary
+            </span>{" "}
+            teams get the hero gamecast when they're live and drive the video highlights card.
+          </p>
+          <TeamPicker
+            followed={settings.followed}
+            primary={settings.primary}
+            onToggleFollow={toggleFollow}
+            onTogglePrimary={togglePrimary}
+          />
         </section>
 
         <section className="border-t border-zinc-800 px-5 py-4">

@@ -31,8 +31,10 @@ function relativeTime(iso: string): string {
 export default function HighlightsCard({ settings }: { settings?: UserSettings }) {
   const url = useMemo(() => {
     const params = new URLSearchParams();
-    if (settings && settings.followed.length) {
-      params.set("teams", settings.followed.join(","));
+    // Use the primary subset (★) for highlights — a smaller, intentional list
+    // that keeps the rotation focused on the teams you most care about.
+    if (settings && settings.primary.length) {
+      params.set("teams", settings.primary.join(","));
     }
     const q = params.toString();
     return q ? `/api/highlights?${q}` : "/api/highlights";
