@@ -9,6 +9,7 @@ type Resp = { posts: SocialPost[]; updatedAt?: string };
 const POSTS_PER_PAGE = 2;
 const POST_LIMIT = 10;
 const CYCLE_MS = 12_000;
+const TEXT_LIMIT = 200;
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -36,11 +37,10 @@ function SourceBadge({ source }: { source: SocialPost["source"] }) {
 }
 
 function PostItem({ p }: { p: SocialPost }) {
-  const TEXT_LIMIT = 280;
   const truncated = p.text.length > TEXT_LIMIT;
   const shown = truncated ? p.text.slice(0, TEXT_LIMIT).trim() + "…" : p.text;
   return (
-    <article className="border-b border-zinc-800 pb-3 last:border-0 last:pb-0">
+    <article className="flex min-h-0 flex-col overflow-hidden border-b border-zinc-800 pb-2 last:border-0 last:pb-0">
       <div className="mb-1 flex items-center gap-2 text-[11px] text-zinc-400">
         <SourceBadge source={p.source} />
         <span className="truncate font-medium text-zinc-300">{p.channelTitle}</span>
@@ -48,7 +48,7 @@ function PostItem({ p }: { p: SocialPost }) {
         <span>{relativeTime(p.publishedAt)}</span>
       </div>
       {shown && (
-        <div className="whitespace-pre-line text-sm leading-snug text-zinc-100">
+        <div className="line-clamp-4 whitespace-pre-line text-sm leading-snug text-zinc-100">
           {shown}
         </div>
       )}
@@ -60,7 +60,7 @@ function PostItem({ p }: { p: SocialPost }) {
               key={i}
               src={src}
               alt=""
-              className="h-28 w-full rounded object-cover"
+              className="h-20 w-full rounded object-cover"
               loading="lazy"
               referrerPolicy="no-referrer"
             />
@@ -68,7 +68,7 @@ function PostItem({ p }: { p: SocialPost }) {
         </div>
       )}
       {p.hasVideo && p.photos.length === 0 && (
-        <div className="mt-2 rounded bg-zinc-800/40 px-2 py-1.5 text-[11px] text-zinc-400">
+        <div className="mt-2 rounded bg-zinc-800/40 px-2 py-1 text-[11px] text-zinc-400">
           🎬 Video post
         </div>
       )}
@@ -117,8 +117,11 @@ export default function SocialFeedCard({ settings }: { settings?: UserSettings }
   const activePage = pages[pageIdx % Math.max(pages.length, 1)] ?? [];
 
   return (
-    <div className="flex flex-col rounded-2xl border border-zinc-800 bg-panel/80 p-3">
-      <div className="mb-3 flex items-center justify-between">
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-panel/80 p-3"
+      style={{ maxHeight: "calc(100vh - 480px)", minHeight: 220 }}
+    >
+      <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Social feed
         </h2>
@@ -138,7 +141,7 @@ export default function SocialFeedCard({ settings }: { settings?: UserSettings }
           )}
         </div>
       </div>
-      <div className="flex flex-col gap-3" style={{ minHeight: 320 }}>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
         {posts.length === 0 ? (
           <div className="py-8 text-center text-sm text-zinc-500">Loading feed…</div>
         ) : (
@@ -146,7 +149,7 @@ export default function SocialFeedCard({ settings }: { settings?: UserSettings }
         )}
       </div>
       {pages.length > 1 && (
-        <div className="mt-3 flex justify-center gap-1.5">
+        <div className="mt-2 flex justify-center gap-1.5">
           {pages.map((_, i) => (
             <span
               key={i}

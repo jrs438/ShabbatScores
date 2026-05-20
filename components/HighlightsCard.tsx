@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePolling } from "./usePolling";
 import type { UserSettings } from "@/lib/settings";
 
@@ -13,7 +13,10 @@ type Highlight = {
 };
 type Resp = { highlights: Highlight[]; updatedAt?: string };
 
-const ROTATE_MS = 4 * 60_000;
+// Hard cap per clip. The YouTube state-change handler advances when each
+// video finishes; this is just the safety net in case the API handshake
+// gets blocked by the browser.
+const FALLBACK_ROTATE_MS = 120_000;
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -38,28 +41,72 @@ export default function HighlightsCard({ settings }: { settings?: UserSettings }
   const { data } = usePolling<Resp>(url, 5 * 60_000, { highlights: [] });
   const highlights = data?.highlights ?? [];
   const [idx, setIdx] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Reset to the newest video whenever the underlying list changes
   useEffect(() => {
     setIdx(0);
   }, [highlights.length, highlights[0]?.id]);
 
-  // Auto-rotate through available highlights
+  // Listen for the YouTube player's "video ended" signal and advance
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      // YouTube postMessages come from a youtube.com origin
+      if (typeof event.origin !== "string" || !event.origin.includes("youtube.com")) return;
+      let data: { event?: string; info?: number } | null = null;
+      try {
+        data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      } catch {
+        return;
+      }
+      // info === 0 means PlayerState.ENDED
+      if (data?.event === "onStateChange" && data?.info === 0) {
+        setIdx((i) => (highlights.length ? (i + 1) % highlights.length : 0));
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [highlights.length]);
+
+  // Safety-net rotation in case the YouTube event never fires
   useEffect(() => {
     if (highlights.length <= 1) return;
     const id = setInterval(() => {
       setIdx((i) => (i + 1) % highlights.length);
-    }, ROTATE_MS);
+    }, FALLBACK_ROTATE_MS);
     return () => clearInterval(id);
   }, [highlights.length]);
+
+  // Tell the iframe to broadcast state changes after it loads
+  const handleIframeLoad = () => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    try {
+      win.postMessage(
+        JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
+        "*"
+      );
+      win.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: "addEventListener",
+          args: ["onStateChange"],
+        }),
+        "*"
+      );
+    } catch {
+      // ignore — fallback timer will still advance
+    }
+  };
 
   if (highlights.length === 0) return null;
 
   const active = highlights[idx % highlights.length];
+  // No loop=1: we want the video to end so onStateChange fires
   const embedSrc =
     `https://www.youtube.com/embed/${active.id}` +
-    `?autoplay=1&mute=1&loop=1&playlist=${active.id}` +
-    `&controls=0&modestbranding=1&playsinline=1&rel=0`;
+    `?autoplay=1&mute=1&controls=0&modestbranding=1` +
+    `&playsinline=1&rel=0&enablejsapi=1`;
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-panel/80 p-3">
@@ -74,7 +121,9 @@ export default function HighlightsCard({ settings }: { settings?: UserSettings }
       <div className="relative aspect-video overflow-hidden rounded-lg bg-bg">
         <iframe
           key={active.id}
+          ref={iframeRef}
           src={embedSrc}
+          onLoad={handleIframeLoad}
           className="absolute inset-0 h-full w-full"
           allow="autoplay; encrypted-media; picture-in-picture"
           referrerPolicy="strict-origin-when-cross-origin"
