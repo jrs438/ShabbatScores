@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { getFullCatalog } from "./teamCatalog";
+import type { LeagueKey } from "./teams";
 
 // Official league + general sports highlight channels. Each posts clips
 // throughout games; together they cover most major-team highlights.
@@ -9,8 +10,21 @@ const LEAGUE_CHANNELS: { id: string; label: string }[] = [
   { id: "UCDVYQ4Zhbm3S2dlz7P1GBDg", label: "NFL" },
   { id: "UCqFMzb-4AUf6WAIbl132QKA", label: "NHL" },
   { id: "UCiWLfSweyRNmLpgEHekhoAg", label: "ESPN" },
-  { id: "UCqQo7ewe87aYAe7ub5UqXMw", label: "HoH" }, // House of Highlights (mostly NBA)
+  { id: "UCqQo7ewe87aYAe7ub5UqXMw", label: "HoH" }, // House of Highlights
 ];
+
+// Which leagues each channel can plausibly cover. League-specific channels
+// only post their own sport; ESPN and HoH are multi-sport. Used to gate
+// title matching so "Giants" on the MLB channel doesn't surface for a fan
+// of the NFL New York Giants.
+const CHANNEL_LEAGUES: Record<string, LeagueKey[]> = {
+  MLB: ["mlb"],
+  NBA: ["nba"],
+  NFL: ["nfl"],
+  NHL: ["nhl"],
+  ESPN: ["mlb", "nba", "nfl", "nhl", "college-football", "mens-college-basketball"],
+  HoH: ["nba", "mens-college-basketball"],
+};
 
 export type Highlight = {
   id: string;
@@ -79,24 +93,30 @@ function escapeRegex(s: string): string {
 }
 
 export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
-  // Look up the user's team names so we can match against video titles.
-  let teamPatterns: RegExp[] = [];
+  // Per-team match data: league + a set of title patterns (name, displayName,
+  // abbreviation). The league is what disambiguates same-named teams across
+  // sports (NFL Giants vs MLB Giants, etc).
+  type TeamMatch = { league: LeagueKey; patterns: RegExp[] };
+  let teamMatches: TeamMatch[] = [];
   if (teamIds.length > 0) {
     try {
       const catalog = await getFullCatalog();
       const allTeams = Object.values(catalog).flat();
       const byId = new Map(allTeams.map((t) => [t.id, t]));
-      const names = new Set<string>();
       for (const id of teamIds) {
         const t = byId.get(id);
         if (!t) continue;
+        const names = new Set<string>();
         if (t.name) names.add(t.name);
         if (t.displayName) names.add(t.displayName);
         if (t.abbr && t.abbr.length >= 2) names.add(t.abbr);
+        const patterns = Array.from(names)
+          .filter((n) => n.length >= 2)
+          .map((n) => new RegExp(`\\b${escapeRegex(n)}\\b`, "i"));
+        if (patterns.length > 0) {
+          teamMatches.push({ league: t.league, patterns });
+        }
       }
-      teamPatterns = Array.from(names)
-        .filter((n) => n.length >= 2)
-        .map((n) => new RegExp(`\\b${escapeRegex(n)}\\b`, "i"));
     } catch (err) {
       console.error("catalog lookup for highlights failed", err);
     }
@@ -114,9 +134,17 @@ export async function fetchHighlights(teamIds: string[]): Promise<Highlight[]> {
     return !Number.isNaN(ts) && ts >= cutoff;
   });
 
-  const matching = teamPatterns.length
-    ? recent.filter((h) => teamPatterns.some((re) => re.test(h.title)))
-    : recent;
+  const videoMatches = (h: Highlight): boolean => {
+    const allowedLeagues = CHANNEL_LEAGUES[h.channel] ?? [];
+    if (allowedLeagues.length === 0) return false;
+    for (const t of teamMatches) {
+      if (!allowedLeagues.includes(t.league)) continue;
+      if (t.patterns.some((re) => re.test(h.title))) return true;
+    }
+    return false;
+  };
+
+  const matching = teamMatches.length ? recent.filter(videoMatches) : recent;
 
   // Dedupe by video ID (some clips appear on multiple channels)
   const seen = new Set<string>();
