@@ -117,7 +117,7 @@ export default function SocialFeedCard({ settings }: { settings?: UserSettings }
   const activePage = pages[pageIdx % Math.max(pages.length, 1)] ?? [];
 
   return (
-    <div className="sticky top-4 flex flex-col rounded-2xl border border-zinc-800 bg-panel/80 p-3">
+    <div className="flex flex-col rounded-2xl border border-zinc-800 bg-panel/80 p-3">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Social feed
