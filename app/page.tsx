@@ -11,6 +11,7 @@ import WeatherStripe from "@/components/WeatherStripe";
 import ScoreTickerBox from "@/components/ScoreTickerBox";
 import HelpDrawer from "@/components/HelpDrawer";
 import InstallHint from "@/components/InstallHint";
+import HighlightsCard from "@/components/HighlightsCard";
 import { useSettings } from "@/components/useSettings";
 
 export default function Page() {
@@ -61,7 +62,10 @@ export default function Page() {
       <div className="px-6 py-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
           <SportsGrid settings={ready ? settings : undefined} />
-          <SocialFeedCard settings={ready ? settings : undefined} />
+          <div className="flex flex-col gap-4">
+            <HighlightsCard settings={ready ? settings : undefined} />
+            <SocialFeedCard settings={ready ? settings : undefined} />
+          </div>
         </div>
       </div>
 
