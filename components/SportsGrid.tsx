@@ -169,7 +169,7 @@ export default function SportsGrid({ settings }: { settings?: UserSettings }) {
   const { data, lastFetched } = usePolling<Resp>(url, 30_000, { games: [] });
   const games = useMemo(() => applySettings(data?.games ?? [], settings), [data, settings]);
 
-  const { featured, followedGames, leaguePlayoffs } = useMemo(() => {
+  const { featuredGames, followedGames, leaguePlayoffs } = useMemo(() => {
     const sortByStart = (a: Game, b: Game) =>
       new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
     const sortByLiveness = (a: Game, b: Game) => {
@@ -177,16 +177,31 @@ export default function SportsGrid({ settings }: { settings?: UserSettings }) {
       const d = order[a.status] - order[b.status];
       return d !== 0 ? d : sortByStart(a, b);
     };
-    const featured = games.find((g) => g.primary && g.status === "live") ?? null;
+    const featuredGames = games.filter((g) => g.primary && g.status === "live");
+    const featuredSet = new Set(featuredGames);
     const followedGames = games
-      .filter((g) => g.followed && g !== featured)
+      .filter((g) => g.followed && !featuredSet.has(g))
       .sort(sortByLiveness);
-    // Around-the-league: playoff games that don't involve any followed team.
     const leaguePlayoffs = games
       .filter((g) => !g.followed && g.isPlayoff)
       .sort(sortByLiveness);
-    return { featured, followedGames, leaguePlayoffs };
+    return { featuredGames, followedGames, leaguePlayoffs };
   }, [games]);
+
+  // Cycle hero between all live primary games (e.g. Mets + Rangers both live).
+  const [heroIdx, setHeroIdx] = useState(0);
+  useEffect(() => {
+    setHeroIdx(0);
+  }, [featuredGames.length, featuredGames[0]?.id]);
+  useEffect(() => {
+    if (featuredGames.length <= 1) return;
+    const id = setInterval(
+      () => setHeroIdx((i) => (i + 1) % featuredGames.length),
+      18_000
+    );
+    return () => clearInterval(id);
+  }, [featuredGames.length]);
+  const featured = featuredGames[heroIdx % Math.max(featuredGames.length, 1)] ?? null;
 
   if (games.length === 0) {
     return (
@@ -212,7 +227,28 @@ export default function SportsGrid({ settings }: { settings?: UserSettings }) {
         )}
       </div>
 
-      {featured && <FeaturedGameCard g={featured} />}
+      {featured && (
+        <div>
+          <FeaturedGameCard g={featured} />
+          {featuredGames.length > 1 && (
+            <div className="mt-2 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
+              <span>
+                Live · {heroIdx + 1}/{featuredGames.length}
+              </span>
+              <div className="flex gap-1.5">
+                {featuredGames.map((g, i) => (
+                  <span
+                    key={g.id}
+                    className={`h-1 rounded-full transition-all ${
+                      i === heroIdx ? "w-5 bg-bad" : "w-1.5 bg-zinc-700"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {followedGames.length > 0 && (
         <div>
