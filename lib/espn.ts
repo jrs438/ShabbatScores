@@ -22,6 +22,32 @@ function todayInEastern(): string {
   return `${get("year")}${get("month")}${get("day")}`;
 }
 
+function yesterdayInEastern(): string {
+  // Use the Eastern-time calendar date and step back one day. We anchor at
+  // noon UTC of that date to avoid timezone-edge slips.
+  const todayET = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()); // YYYY-MM-DD
+  const d = new Date(`${todayET}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+function currentEasternHour(): number {
+  const hourStr = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "2-digit",
+    hour12: false,
+  }).format(new Date());
+  return parseInt(hourStr, 10);
+}
+
 function easternDateString(iso: string): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York",
@@ -75,18 +101,40 @@ function mapStatus(state: string, name: string): GameStatus {
 }
 
 export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEvent[]> {
-  const date = todayInEastern();
-  const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
-  const res = await fetch(url, {
-    next: { revalidate: 30 },
-    headers: { "User-Agent": "ShabbatScores/1.0" },
-  });
-  if (!res.ok) throw new Error(`ESPN ${league} responded ${res.status}`);
-  const data = (await res.json()) as { events?: EspnEvent[] };
+  // Before noon Eastern we also pull yesterday's date so last night's
+  // finals stay visible alongside the day's upcoming schedule. After noon
+  // we drop yesterday and only show today.
   const today = todayInEastern();
-  return (data.events ?? []).filter((ev) => {
-    // Belt-and-suspenders: drop anything ESPN smuggles in from another day.
-    return easternDateString(ev.date).replace(/-/g, "") === today;
+  const datesToFetch =
+    currentEasternHour() < 12 ? [yesterdayInEastern(), today] : [today];
+
+  const allEvents: EspnEvent[] = [];
+  for (const date of datesToFetch) {
+    try {
+      const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
+      const res = await fetch(url, {
+        next: { revalidate: 30 },
+        headers: { "User-Agent": "ShabbatScores/1.0" },
+      });
+      if (!res.ok) continue;
+      const data = (await res.json()) as { events?: EspnEvent[] };
+      // Belt-and-suspenders: keep only events ESPN actually files on that day.
+      const filtered = (data.events ?? []).filter(
+        (ev) => easternDateString(ev.date).replace(/-/g, "") === date
+      );
+      allEvents.push(...filtered);
+    } catch (err) {
+      console.error(`ESPN ${league} ${date} failed`, err);
+    }
+  }
+
+  // Dedupe in case the same event surfaces under both dates (extra innings
+  // bleeding into the next morning, etc).
+  const seen = new Set<string>();
+  return allEvents.filter((ev) => {
+    if (seen.has(ev.id)) return false;
+    seen.add(ev.id);
+    return true;
   });
 }
 
