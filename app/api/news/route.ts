@@ -10,14 +10,17 @@ type Feed = { url: string; source: string; category: NewsCategory };
 // Source catalog grouped by topical category. Add/remove freely.
 const ALL_FEEDS: Feed[] = [
   // Top / mainstream
-  { url: "https://feeds.bbci.co.uk/news/rss.xml", source: "BBC", category: "top" },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", source: "NYT", category: "top" },
+  { url: "http://rss.cnn.com/rss/cnn_topstories.rss", source: "CNN", category: "top" },
+  { url: "https://feeds.a.dj.com/rss/RSSWorldNews.xml", source: "WSJ", category: "top" },
   { url: "https://feeds.npr.org/1001/rss.xml", source: "NPR", category: "top" },
   // US
-  { url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", source: "BBC US", category: "us" },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/US.xml", source: "NYT US", category: "us" },
+  { url: "http://rss.cnn.com/rss/cnn_us.rss", source: "CNN US", category: "us" },
   { url: "https://feeds.npr.org/1003/rss.xml", source: "NPR US", category: "us" },
   // World
-  { url: "https://feeds.bbci.co.uk/news/world/rss.xml", source: "BBC World", category: "world" },
-  { url: "https://www.aljazeera.com/xml/rss/all.xml", source: "Al Jazeera", category: "world" },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", source: "NYT World", category: "world" },
+  { url: "http://rss.cnn.com/rss/cnn_world.rss", source: "CNN World", category: "world" },
   // Israel
   { url: "https://www.timesofisrael.com/feed/", source: "Times of Israel", category: "israel" },
   { url: "https://rss.jpost.com/rss/rssfeedsfrontpage.aspx", source: "Jerusalem Post", category: "israel" },
