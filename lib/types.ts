@@ -63,10 +63,12 @@ export type HebcalInfo = {
   shabbatEndsAt: string | null;
 };
 
+export type NewsCategory = "top" | "us" | "world" | "israel" | "sports";
+
 export type NewsItem = {
   title: string;
   source: string;
   link: string;
   pubDate: string;
-  category: "israel" | "us" | "world";
+  category: NewsCategory;
 };

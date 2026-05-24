@@ -74,7 +74,7 @@ export default function Page() {
           <ScoreTickerBox />
         </div>
         <div className="flex-1 overflow-hidden">
-          <NewsTicker />
+          <NewsTicker settings={ready ? settings : undefined} />
         </div>
       </div>
 

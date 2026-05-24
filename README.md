@@ -8,7 +8,7 @@ An always-on dashboard for Shabbat. Set it up once before Shabbat starts; for th
 - **Featured gamecast** — when one of your favorite teams is playing live, you get the hero card with sport-specific detail (baseball diamond + runners, football down & distance + possession, basketball/hockey clock & period, plus last play and win probability)
 - **Compact score ticker** at the bottom cycling through every league with games today
 - **Live video highlights** — auto-playing muted clips from MLB / NBA / NFL / NHL / ESPN YouTube channels, filtered to your **Primary** teams only. Plays newest clip, advances when each ends. Can be turned off entirely in Settings for Shabbat observance.
-- **News ticker** scrolling Times of Israel, JPost, BBC, NPR
+- **News ticker** scrolling your chosen mix of Top/Mainstream, US, World, Israel, and Sports sources (configurable)
 - **Social feed** showing the 10 most recent posts from Telegram public channels and Bluesky accounts of your choice, cycling 2 at a time every 12 seconds
 - **Shabbat times** — parashah or holiday, candle-lighting, havdalah, plus the Hebrew date
 - **Weather** for any US ZIP — current conditions + next 4 forecast periods with icons
@@ -30,6 +30,7 @@ An always-on dashboard for Shabbat. Set it up once before Shabbat starts; for th
 | **Video highlights** | On/off toggle for the auto-playing video card. Default on. Off hides the card entirely and loads no YouTube content — for Shabbat observance. |
 | **Teams** | Search ~500 ESPN teams across all six leagues. **Follow ✓** = small card. **Primary ★** = hero gamecast card when playing live, and drives the live highlights card. |
 | **Social feed** | Add Telegram public channel handles (e.g. `osint613`) or Bluesky handles (e.g. `bellingcat.com`). Paste a handle or a URL; it normalizes either. |
+| **News ticker** | Choose which categories scroll along the bottom: Top/Mainstream (BBC, NPR), US, World (BBC World, Al Jazeera), Israel (Times of Israel, JPost, Ynet), Sports (ESPN). |
 | **Share link** | "Copy share link" puts your full configuration into a URL. Send to friends; they open it once and their dashboard saves your picks automatically. |
 | **Reset to defaults** | Restores the original New York / Alabama / St. John's lineup, Paramus location, and the default Telegram channel. |
 

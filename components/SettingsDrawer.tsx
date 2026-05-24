@@ -43,6 +43,20 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
     });
   };
 
+  const NEWS_CATEGORIES: { id: string; label: string; desc: string }[] = [
+    { id: "top", label: "Top / Mainstream", desc: "BBC, NPR" },
+    { id: "us", label: "US", desc: "BBC US, NPR US" },
+    { id: "world", label: "World", desc: "BBC World, Al Jazeera" },
+    { id: "israel", label: "Israel", desc: "Times of Israel, JPost, Ynet" },
+    { id: "sports", label: "Sports", desc: "ESPN" },
+  ];
+  const toggleNewsCat = (id: string) => {
+    const set = new Set(settings.newsCategories);
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    onChange({ newsCategories: Array.from(set) });
+  };
+
   const copyShare = async () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const url = buildShareUrl(origin, settings);
@@ -179,6 +193,42 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
             blueskyHandles={settings.blueskyHandles}
             onChange={onChange}
           />
+        </section>
+
+        <section className="border-t border-zinc-800 px-5 py-4">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+            News ticker
+          </h3>
+          <p className="mb-3 text-xs text-zinc-500">
+            Choose which categories scroll along the bottom. Headlines are interleaved so no
+            single source dominates.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {NEWS_CATEGORIES.map((c) => {
+              const on = settings.newsCategories.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => toggleNewsCat(c.id)}
+                  className={`flex items-center justify-between rounded-md px-3 py-2 text-sm ${
+                    on ? "bg-good/15 text-zinc-100" : "bg-panel2 text-zinc-400"
+                  }`}
+                >
+                  <span className="flex flex-col items-start">
+                    <span className="font-medium">{c.label}</span>
+                    <span className="text-[10px] text-zinc-500">{c.desc}</span>
+                  </span>
+                  <span
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      on ? "bg-good/30 text-good" : "bg-zinc-700 text-zinc-400"
+                    }`}
+                  >
+                    {on ? "On" : "Off"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </section>
 
         <section className="border-t border-zinc-800 px-5 py-4">
