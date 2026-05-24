@@ -30,7 +30,7 @@ An always-on dashboard for Shabbat. Set it up once before Shabbat starts; for th
 | **Video highlights** | On/off toggle for the auto-playing video card. Default on. Off hides the card entirely and loads no YouTube content — for Shabbat observance. |
 | **Teams** | Search ~500 ESPN teams across all six leagues. **Follow ✓** = small card. **Primary ★** = hero gamecast card when playing live, and drives the live highlights card. |
 | **Social feed** | Add Telegram public channel handles (e.g. `osint613`) or Bluesky handles (e.g. `bellingcat.com`). Paste a handle or a URL; it normalizes either. |
-| **News ticker** | Choose which categories scroll along the bottom: Top/Mainstream (BBC, NPR), US, World (BBC World, Al Jazeera), Israel (Times of Israel, JPost, Ynet), Sports (ESPN). |
+| **News ticker** | Choose which categories scroll along the bottom: Top/Mainstream (NYT, CNN, WSJ, NPR), US, World (NYT World, CNN World), Israel (Times of Israel, JPost, Ynet), Sports (ESPN). |
 | **Share link** | "Copy share link" puts your full configuration into a URL. Send to friends; they open it once and their dashboard saves your picks automatically. |
 | **Reset to defaults** | Restores the original New York / Alabama / St. John's lineup, Paramus location, and the default Telegram channel. |
 
@@ -44,7 +44,7 @@ Everything is free public data — no API keys required, no paid subscriptions.
 | Team catalog | ESPN teams endpoint per league |
 | Weather | National Weather Service (`api.weather.gov`) + Open-Meteo geocoding for ZIP → lat/lon |
 | Hebrew calendar | Hebcal Shabbat API |
-| News ticker | RSS: Times of Israel, JPost, BBC, NPR |
+| News ticker | RSS: NYT, CNN, WSJ, NPR, Times of Israel, JPost, Ynet, ESPN |
 | Social feed | Public Telegram channel previews (`t.me/s/CHANNEL`) and Bluesky public AppView API |
 
 ## Tech stack

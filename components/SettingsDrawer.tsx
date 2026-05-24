@@ -44,9 +44,9 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
   };
 
   const NEWS_CATEGORIES: { id: string; label: string; desc: string }[] = [
-    { id: "top", label: "Top / Mainstream", desc: "BBC, NPR" },
-    { id: "us", label: "US", desc: "BBC US, NPR US" },
-    { id: "world", label: "World", desc: "BBC World, Al Jazeera" },
+    { id: "top", label: "Top / Mainstream", desc: "NYT, CNN, WSJ, NPR" },
+    { id: "us", label: "US", desc: "NYT US, CNN US, NPR US" },
+    { id: "world", label: "World", desc: "NYT World, CNN World" },
     { id: "israel", label: "Israel", desc: "Times of Israel, JPost, Ynet" },
     { id: "sports", label: "Sports", desc: "ESPN" },
   ];
