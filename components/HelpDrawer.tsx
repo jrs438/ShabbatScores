@@ -119,6 +119,11 @@ export default function HelpDrawer({ open, onClose }: Props) {
               Paste either a bare handle or a full URL — the input normalizes both.
             </li>
             <li>
+              <strong>News ticker:</strong> Pick which categories scroll along the bottom — Top /
+              Mainstream, US, World, Israel, Sports. Headlines from the selected categories are
+              interleaved so no single source dominates.
+            </li>
+            <li>
               <strong>Share link:</strong> "Copy share link" puts your full configuration into a
               URL. Send it to a friend; opening the link saves their picks automatically. They can
               then customize further on their own device without affecting yours.

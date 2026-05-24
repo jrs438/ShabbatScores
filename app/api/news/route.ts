@@ -1,18 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { XMLParser } from "fast-xml-parser";
-import type { NewsItem } from "@/lib/types";
+import type { NewsItem, NewsCategory } from "@/lib/types";
 
 export const revalidate = 600;
 export const dynamic = "force-dynamic";
 
-type Feed = { url: string; source: string; category: NewsItem["category"] };
+type Feed = { url: string; source: string; category: NewsCategory };
 
-const FEEDS: Feed[] = [
+// Source catalog grouped by topical category. Add/remove freely.
+const ALL_FEEDS: Feed[] = [
+  // Top / mainstream
+  { url: "https://feeds.bbci.co.uk/news/rss.xml", source: "BBC", category: "top" },
+  { url: "https://feeds.npr.org/1001/rss.xml", source: "NPR", category: "top" },
+  // US
+  { url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", source: "BBC US", category: "us" },
+  { url: "https://feeds.npr.org/1003/rss.xml", source: "NPR US", category: "us" },
+  // World
+  { url: "https://feeds.bbci.co.uk/news/world/rss.xml", source: "BBC World", category: "world" },
+  { url: "https://www.aljazeera.com/xml/rss/all.xml", source: "Al Jazeera", category: "world" },
+  // Israel
   { url: "https://www.timesofisrael.com/feed/", source: "Times of Israel", category: "israel" },
   { url: "https://rss.jpost.com/rss/rssfeedsfrontpage.aspx", source: "Jerusalem Post", category: "israel" },
-  { url: "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml", source: "BBC", category: "us" },
-  { url: "https://feeds.npr.org/1001/rss.xml", source: "NPR", category: "us" },
+  { url: "https://www.ynetnews.com/Integration/StoryRss2.xml", source: "Ynet", category: "israel" },
+  // Sports
+  { url: "https://www.espn.com/espn/rss/news", source: "ESPN", category: "sports" },
 ];
+
+const DEFAULT_CATEGORIES: NewsCategory[] = ["top", "us", "israel", "sports"];
+const VALID: NewsCategory[] = ["top", "us", "world", "israel", "sports"];
 
 function ensureArray<T>(x: T | T[] | undefined | null): T[] {
   if (x == null) return [];
@@ -43,15 +58,15 @@ async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
   try {
     const res = await fetch(feed.url, {
       next: { revalidate: 600 },
-      headers: { "User-Agent": "ShabbatScores/1.0", Accept: "application/rss+xml, application/xml, text/xml" },
+      headers: {
+        "User-Agent": "ShabbatScores/1.0",
+        Accept: "application/rss+xml, application/xml, text/xml",
+      },
     });
     if (!res.ok) return [];
     const xml = await res.text();
     const parsed = parser.parse(xml);
-    const rawItems =
-      parsed?.rss?.channel?.item ??
-      parsed?.feed?.entry ??
-      null;
+    const rawItems = parsed?.rss?.channel?.item ?? parsed?.feed?.entry ?? null;
     const items: RssItem[] = ensureArray<RssItem>(rawItems);
     return items.slice(0, 8).map((it) => ({
       title: textOf(it.title) || "(untitled)",
@@ -66,20 +81,42 @@ async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
   }
 }
 
-export async function GET() {
-  const results = await Promise.all(FEEDS.map(fetchFeed));
+export async function GET(req: NextRequest) {
+  const catParam = req.nextUrl.searchParams.get("cat");
+  const requested = catParam
+    ? (catParam.split(",").filter((c) => VALID.includes(c as NewsCategory)) as NewsCategory[])
+    : DEFAULT_CATEGORIES;
+  const categories = requested.length > 0 ? requested : DEFAULT_CATEGORIES;
+
+  const feeds = ALL_FEEDS.filter((f) => categories.includes(f.category));
+  const results = await Promise.all(feeds.map(fetchFeed));
   const all = results.flat();
-  // Interleave Israel + US so the ticker mixes both
-  const israel = all.filter((i) => i.category === "israel");
-  const us = all.filter((i) => i.category !== "israel");
-  const merged: NewsItem[] = [];
-  const max = Math.max(israel.length, us.length);
-  for (let i = 0; i < max; i++) {
-    if (israel[i]) merged.push(israel[i]);
-    if (us[i]) merged.push(us[i]);
+
+  // Round-robin interleave across the selected categories so no single source
+  // dominates the ticker.
+  const buckets = new Map<NewsCategory, NewsItem[]>();
+  for (const item of all) {
+    const arr = buckets.get(item.category) ?? [];
+    arr.push(item);
+    buckets.set(item.category, arr);
   }
+  const merged: NewsItem[] = [];
+  let added = true;
+  let round = 0;
+  while (added) {
+    added = false;
+    for (const cat of categories) {
+      const arr = buckets.get(cat);
+      if (arr && arr[round]) {
+        merged.push(arr[round]);
+        added = true;
+      }
+    }
+    round++;
+  }
+
   return NextResponse.json(
-    { items: merged.slice(0, 40), updatedAt: new Date().toISOString() },
+    { items: merged.slice(0, 50), updatedAt: new Date().toISOString() },
     { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800" } }
   );
 }

@@ -46,14 +46,28 @@ export async function GET(req: NextRequest) {
     const hdate = (await hdateRes.json()) as HdateResp;
 
     const items = shabbat.items ?? [];
-    const parashah = items.find((i) => i.category === "parashat")?.title ?? null;
-    const candle = items.find((i) => i.category === "candles");
-    const havdalah = items.find((i) => i.category === "havdalah");
+    const nowMs = Date.now();
+    // Keep events from the last 18h (so a holiday/Shabbat in progress still
+    // shows) but drop anything already finished, so the display rolls forward
+    // past Erev Shavuot etc. instead of sticking on a stale candle time.
+    const graceMs = 18 * 60 * 60 * 1000;
+    const isCurrentOrUpcoming = (i: HebcalItem) =>
+      !i.date || new Date(i.date).getTime() >= nowMs - graceMs;
+
+    const parashah =
+      items.filter((i) => i.category === "parashat").find(isCurrentOrUpcoming)?.title ??
+      null;
+    const candle = items
+      .filter((i) => i.category === "candles")
+      .find(isCurrentOrUpcoming);
+    const havdalah = items
+      .filter((i) => i.category === "havdalah")
+      .find(isCurrentOrUpcoming);
     const holidays = items
-      .filter((i) => i.category === "holiday")
+      .filter((i) => i.category === "holiday" && isCurrentOrUpcoming(i))
       .map((i) => i.title);
 
-    const now = Date.now();
+    const now = nowMs;
     const candleAt = candle ? new Date(candle.date).getTime() : null;
     const havdalahAt = havdalah ? new Date(havdalah.date).getTime() : null;
     const isShabbat =
