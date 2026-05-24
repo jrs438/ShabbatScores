@@ -4,7 +4,7 @@ import type { LeagueKey } from "./teams";
 
 // Official league + general sports highlight channels. Each posts clips
 // throughout games; together they cover most major-team highlights.
-const LEAGUE_CHANNELS: { id: string; label: string }[] = [
+export const LEAGUE_CHANNELS: { id: string; label: string }[] = [
   { id: "UCoLrcjPV5PbUrUyXq5mjc_A", label: "MLB" },
   { id: "UCWJ2lWNubArHWmf3FIHbfcQ", label: "NBA" },
   { id: "UCDVYQ4Zhbm3S2dlz7P1GBDg", label: "NFL" },
@@ -61,7 +61,7 @@ function textOf(v: unknown): string {
   return "";
 }
 
-async function fetchChannelHighlights(channelId: string, label: string): Promise<Highlight[]> {
+export async function fetchChannelHighlights(channelId: string, label: string): Promise<Highlight[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
   try {
     const res = await fetch(url, {
