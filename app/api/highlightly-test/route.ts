@@ -28,12 +28,24 @@ export async function GET(req: NextRequest) {
   const path = sp.get("path") ?? "/highlights";
   const query = sp.get("query") ?? "limit=5";
   const url = `${base}${path}?${query}`;
+  const host = new URL(base).host; // e.g. "sports.highlightly.net"
 
+  // Highlightly's direct API uses RapidAPI-style header names. The mandatory
+  // pair is x-rapidapi-key + x-rapidapi-host (host = the direct domain).
   const headerVariants: { name: string; headers: Record<string, string> }[] = [
+    {
+      name: "x-rapidapi-key + x-rapidapi-host (direct host)",
+      headers: { "x-rapidapi-key": key, "x-rapidapi-host": host },
+    },
+    {
+      name: "x-rapidapi-key + x-rapidapi-host (sport-highlights-api)",
+      headers: {
+        "x-rapidapi-key": key,
+        "x-rapidapi-host": "sport-highlights-api.p.rapidapi.com",
+      },
+    },
+    { name: "x-rapidapi-key only", headers: { "x-rapidapi-key": key } },
     { name: "x-api-key", headers: { "x-api-key": key } },
-    { name: "Authorization (raw)", headers: { Authorization: key } },
-    { name: "Authorization Bearer", headers: { Authorization: `Bearer ${key}` } },
-    { name: "apikey", headers: { apikey: key } },
   ];
 
   const attempts: {
