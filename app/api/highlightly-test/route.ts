@@ -3,96 +3,53 @@ import { NextResponse, type NextRequest } from "next/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// One-time probe to discover the Highlightly contract: which auth header
-// works, whether the endpoint path is right, and what the response (esp.
-// video URL) looks like. Reads the key from env — never hardcoded.
+// Probe for the Highlightly contract. Auth is solved: x-rapidapi-key +
+// x-rapidapi-host (host = the direct domain). The unified API needs a sport
+// prefix in the path, e.g. /basketball/highlights, /baseball/highlights.
 //
-//   /api/highlightly-test
-//   /api/highlightly-test?base=https://basketball.highlightly.net&path=/highlights&query=limit=5
-//   /api/highlightly-test?query=limit=5%26leagueName=NBA
+//   /api/highlightly-test                          -> basketball highlights
+//   /api/highlightly-test?path=/baseball/highlights
+//   /api/highlightly-test?path=/basketball/highlights&query=limit=5
 
 export async function GET(req: NextRequest) {
   const key = process.env.HIGHLIGHTLY_API_KEY;
   if (!key) {
     return NextResponse.json(
-      {
-        error: "HIGHLIGHTLY_API_KEY is not set.",
-        fix: "Add it in Vercel → Project Settings → Environment Variables, then redeploy.",
-      },
+      { error: "HIGHLIGHTLY_API_KEY is not set in Vercel env." },
       { status: 200 }
     );
   }
 
   const sp = req.nextUrl.searchParams;
   const base = sp.get("base") ?? "https://sports.highlightly.net";
-  const path = sp.get("path") ?? "/highlights";
+  const path = sp.get("path") ?? "/basketball/highlights";
   const query = sp.get("query") ?? "limit=5";
   const url = `${base}${path}?${query}`;
-  const host = new URL(base).host; // e.g. "sports.highlightly.net"
+  const host = new URL(base).host;
 
-  // Highlightly's direct API uses RapidAPI-style header names. The mandatory
-  // pair is x-rapidapi-key + x-rapidapi-host (host = the direct domain).
-  const headerVariants: { name: string; headers: Record<string, string> }[] = [
-    {
-      name: "x-rapidapi-key + x-rapidapi-host (direct host)",
-      headers: { "x-rapidapi-key": key, "x-rapidapi-host": host },
-    },
-    {
-      name: "x-rapidapi-key + x-rapidapi-host (sport-highlights-api)",
+  try {
+    const res = await fetch(url, {
       headers: {
         "x-rapidapi-key": key,
-        "x-rapidapi-host": "sport-highlights-api.p.rapidapi.com",
+        "x-rapidapi-host": host,
+        Accept: "application/json",
       },
-    },
-    { name: "x-rapidapi-key only", headers: { "x-rapidapi-key": key } },
-    { name: "x-api-key", headers: { "x-api-key": key } },
-  ];
-
-  const attempts: {
-    header: string;
-    status: number;
-    ok: boolean;
-    bodyPreview: unknown;
-  }[] = [];
-
-  for (const variant of headerVariants) {
+      cache: "no-store",
+    });
+    const text = await res.text();
+    let body: unknown;
     try {
-      const res = await fetch(url, {
-        headers: { ...variant.headers, Accept: "application/json" },
-        cache: "no-store",
-      });
-      const text = await res.text();
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        parsed = text.slice(0, 600);
-      }
-      attempts.push({
-        header: variant.name,
-        status: res.status,
-        ok: res.ok,
-        bodyPreview: parsed,
-      });
-      // Stop at the first clearly-successful auth to save quota
-      if (res.ok) break;
-    } catch (e) {
-      attempts.push({
-        header: variant.name,
-        status: -1,
-        ok: false,
-        bodyPreview: String(e),
-      });
+      body = JSON.parse(text);
+    } catch {
+      body = text.slice(0, 1200);
     }
+    return NextResponse.json({
+      requestedUrl: url,
+      status: res.status,
+      ok: res.ok,
+      body,
+    });
+  } catch (e) {
+    return NextResponse.json({ requestedUrl: url, error: String(e) }, { status: 200 });
   }
-
-  const winner = attempts.find((a) => a.ok);
-  return NextResponse.json({
-    requestedUrl: url,
-    workingHeader: winner?.header ?? null,
-    attempts,
-    note:
-      "If all failed with 401/403, try ?header tweaks or a different ?base " +
-      "(e.g. https://basketball.highlightly.net). If 404, the ?path is wrong.",
-  });
 }
