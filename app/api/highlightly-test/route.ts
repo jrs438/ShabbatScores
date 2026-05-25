@@ -23,7 +23,11 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const base = sp.get("base") ?? "https://sports.highlightly.net";
   const path = sp.get("path") ?? "/basketball/highlights";
-  const query = sp.get("query") ?? "limit=5";
+  // The highlights endpoint requires at least one real filter (not just limit).
+  // Override with ?query=... to experiment, e.g.:
+  //   query=limit=5%26leagueName=NBA
+  //   query=limit=5%26date=2026-05-18
+  const query = sp.get("query") ?? "limit=5&leagueName=NBA";
   const url = `${base}${path}?${query}`;
   const host = new URL(base).host;
 
