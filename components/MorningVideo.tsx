@@ -122,8 +122,8 @@ export default function MorningVideo({ settings }: { settings?: UserSettings }) 
           </div>
         </div>
       </div>
-      {/* Cap height (~40vh) so the video + scores fit one iPad screen. */}
-      <div className="relative mx-auto aspect-video w-full max-w-[72vh] overflow-hidden rounded-xl bg-bg">
+      {/* Cap height (~34vh) so the video + scores fit one iPad screen. */}
+      <div className="relative mx-auto aspect-video w-full max-w-[60vh] overflow-hidden rounded-xl bg-bg">
         <iframe
           key={active.videoId}
           ref={iframeRef}

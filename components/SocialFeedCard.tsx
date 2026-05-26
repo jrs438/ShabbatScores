@@ -76,7 +76,13 @@ function PostItem({ p }: { p: SocialPost }) {
   );
 }
 
-export default function SocialFeedCard({ settings }: { settings?: UserSettings }) {
+export default function SocialFeedCard({
+  settings,
+  maxHeight = "calc(100vh - 480px)",
+}: {
+  settings?: UserSettings;
+  maxHeight?: string;
+}) {
   const url = useMemo(() => {
     if (!settings) return "/api/social";
     const params = new URLSearchParams();
@@ -119,7 +125,7 @@ export default function SocialFeedCard({ settings }: { settings?: UserSettings }
   return (
     <div
       className="flex flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-panel/80 p-3"
-      style={{ maxHeight: "calc(100vh - 480px)", minHeight: 220 }}
+      style={{ maxHeight, minHeight: 220 }}
     >
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">

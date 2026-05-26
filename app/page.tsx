@@ -71,13 +71,13 @@ export default function Page() {
         </div>
       </header>
 
-      <div className="px-6 py-4">
+      <div className="px-6 py-3">
         {showVideo ? (
           // Morning: video + social side-by-side on top, scores full-width below.
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_360px]">
               <MorningVideo settings={settings} />
-              <SocialFeedCard settings={ready ? settings : undefined} />
+              <SocialFeedCard settings={ready ? settings : undefined} maxHeight="38vh" />
             </div>
             <SportsGrid settings={ready ? settings : undefined} compact wide />
           </div>
