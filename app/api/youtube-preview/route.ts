@@ -24,9 +24,12 @@ const OFFICIAL_CHANNELS: Record<string, string> = {
   nhl: "UCqFMzb-4AUf6WAIbl132QKA",
 };
 
-// Title words that signal NOT a game-highlight recap.
+// Title words that signal NOT a standard game-highlight recap. Note we do NOT
+// exclude "full game" — the NBA titles its official condensed highlights
+// "FULL GAME HIGHLIGHTS". The much longer "EXTENDED" cut and "replay" are
+// excluded (and the duration cap catches them anyway).
 const EXCLUDE =
-  /press conf|interview|preview|reaction|mic'?d|podcast|pregame|post-?game show|full game|replay|live stream|livestream|top \d+ plays|every|best of|trailer/i;
+  /press conf|interview|preview|reaction|mic'?d|podcast|pregame|post-?game show|media availability|extended|replay|live ?stream|top \d+ plays|trailer/i;
 
 function parseDuration(iso: string): number {
   const m = iso?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
