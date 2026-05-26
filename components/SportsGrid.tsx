@@ -159,9 +159,11 @@ function CyclingPanel({ games }: { games: Game[] }) {
 export default function SportsGrid({
   settings,
   compact,
+  wide,
 }: {
   settings?: UserSettings;
   compact?: boolean;
+  wide?: boolean;
 }) {
   // Pass team IDs to the server so it knows which games to return (saves us
   // pulling every game across every league).
@@ -262,7 +264,13 @@ export default function SportsGrid({
             Your teams
           </h3>
           {featured || compact ? (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+            <div
+              className={
+                wide
+                  ? "grid grid-cols-3 gap-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                  : "grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4"
+              }
+            >
               {followedGames.map((g) => (
                 <GameCard key={g.id} g={g} compact />
               ))}
