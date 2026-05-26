@@ -72,13 +72,21 @@ export default function Page() {
       </header>
 
       <div className="px-6 py-4">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+        {showVideo ? (
+          // Morning: video + social side-by-side on top, scores full-width below.
           <div className="flex flex-col gap-4">
-            {showVideo && <MorningVideo settings={settings} />}
-            <SportsGrid settings={ready ? settings : undefined} compact={showVideo} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+              <MorningVideo settings={settings} />
+              <SocialFeedCard settings={ready ? settings : undefined} />
+            </div>
+            <SportsGrid settings={ready ? settings : undefined} compact wide />
           </div>
-          <SocialFeedCard settings={ready ? settings : undefined} />
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+            <SportsGrid settings={ready ? settings : undefined} />
+            <SocialFeedCard settings={ready ? settings : undefined} />
+          </div>
+        )}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-50 flex h-16 border-t border-zinc-800 bg-panel/95">
