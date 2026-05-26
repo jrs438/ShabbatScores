@@ -75,10 +75,19 @@ export default function HelpDrawer({ open, onClose }: Props) {
               show as smaller cards. Around-the-league playoff games cycle every 7 seconds.
             </li>
             <li>
-              <strong>Live highlights (right sidebar, optional):</strong> Auto-playing muted clips
-              from MLB / NBA / NFL / NHL / ESPN for your <strong>Primary</strong> teams. Plays
-              the newest clip, advances when it ends. Can be turned off in Settings for Shabbat
-              observance.
+              <strong>Morning highlights (7am–noon ET, main column):</strong> A large video player
+              shows each <strong>Primary</strong> team's full game recap from their official channel,
+              plus a daily all-sports Top 10 reel — each plays in full, then advances. During this
+              window the scoreboard shows last night's finals; today's schedule appears at noon.
+              Can be turned off in Settings for Shabbat observance. (Pro leagues only — college isn't
+              supported.)
+            </li>
+            <li>
+              <strong>Scores (main column):</strong> A Primary team playing live gets a hero card
+              with full gamecast — diamond for baseball, down & distance for football, period &
+              clock for basketball/hockey — plus last play and win probability. Followed teams
+              show as smaller cards. Around-the-league playoff games cycle every 7 seconds. Last
+              night's finals stay up until 5pm ET; today's schedule shows from noon onward.
             </li>
             <li>
               <strong>Social feed (right sidebar):</strong> 10 most recent posts from your Telegram
@@ -101,9 +110,10 @@ export default function HelpDrawer({ open, onClose }: Props) {
               is Paramus, NJ (07652).
             </li>
             <li>
-              <strong>Video highlights:</strong> On/off toggle for the auto-playing video card.
-              Default is on. Off hides the card and skips loading any YouTube content — useful
-              for Shabbat observance.
+              <strong>Video highlights:</strong> On/off toggle for the morning video player.
+              Default is on. Off hides it and skips loading any YouTube content — useful for
+              Shabbat observance. Pulls full game recaps for your Primary teams from their official
+              channels (pro leagues only; college isn't supported).
             </li>
             <li>
               <strong>Teams:</strong> Search ~500 ESPN teams across MLB, NFL, NBA, NHL, college

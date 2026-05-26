@@ -101,12 +101,14 @@ function mapStatus(state: string, name: string): GameStatus {
 }
 
 export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEvent[]> {
-  // Before noon Eastern we also pull yesterday's date so last night's
-  // finals stay visible alongside the day's upcoming schedule. After noon
-  // we drop yesterday and only show today.
+  // Score windows by Eastern hour:
+  //   before noon  → yesterday only (last night's finals)
+  //   noon–5pm     → yesterday + today (finals + the day's schedule)
+  //   5pm onward   → today only
+  const h = currentEasternHour();
   const today = todayInEastern();
-  const datesToFetch =
-    currentEasternHour() < 12 ? [yesterdayInEastern(), today] : [today];
+  const yesterday = yesterdayInEastern();
+  const datesToFetch = h < 12 ? [yesterday] : h < 17 ? [yesterday, today] : [today];
 
   const allEvents: EspnEvent[] = [];
   for (const date of datesToFetch) {

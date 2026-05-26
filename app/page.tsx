@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Clock from "@/components/Clock";
 import SportsGrid from "@/components/SportsGrid";
 import NewsTicker from "@/components/NewsTicker";
@@ -11,13 +11,25 @@ import WeatherStripe from "@/components/WeatherStripe";
 import ScoreTickerBox from "@/components/ScoreTickerBox";
 import HelpDrawer from "@/components/HelpDrawer";
 import InstallHint from "@/components/InstallHint";
-import HighlightsCard from "@/components/HighlightsCard";
+import MorningVideo from "@/components/MorningVideo";
 import { useSettings } from "@/components/useSettings";
+import { currentPhase, phaseShowsVideo, type DayPhase } from "@/lib/dayphase";
 
 export default function Page() {
   const { settings, update, reset, ready } = useSettings();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [phase, setPhase] = useState<DayPhase>("evening");
+
+  useEffect(() => {
+    const tick = () => setPhase(currentPhase());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const showVideo =
+    ready && phaseShowsVideo(phase) && settings.videoHighlights !== false;
 
   return (
     <main className="relative min-h-screen pb-20">
@@ -61,11 +73,11 @@ export default function Page() {
 
       <div className="px-6 py-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
-          <SportsGrid settings={ready ? settings : undefined} />
           <div className="flex flex-col gap-4">
-            <HighlightsCard settings={ready ? settings : undefined} />
-            <SocialFeedCard settings={ready ? settings : undefined} />
+            {showVideo && <MorningVideo settings={settings} />}
+            <SportsGrid settings={ready ? settings : undefined} />
           </div>
+          <SocialFeedCard settings={ready ? settings : undefined} />
         </div>
       </div>
 
