@@ -53,10 +53,38 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const team = sp.get("team") ?? "New York Mets";
   const league = sp.get("league"); // mlb | nba | nfl | nhl — restricts to official channel
-  const channelId = sp.get("channelId") ?? (league ? OFFICIAL_CHANNELS[league] : undefined);
-  // When searching within an official channel, query the team name alone;
-  // otherwise append "highlights" to a broad search.
-  const q = sp.get("q") ?? (channelId ? team : `${team} highlights`);
+  const handle = sp.get("handle"); // e.g. nyknicks — resolves to a channel and lists its uploads
+
+  // Resolve a @handle to a channel id (1 unit). Lets us inspect a team's own
+  // channel or the top-plays channel without knowing the UC… id.
+  let resolvedChannelId: string | undefined =
+    sp.get("channelId") ?? (league ? OFFICIAL_CHANNELS[league] : undefined);
+  let handleInfo: { handle: string; channelId: string; title: string } | null = null;
+  if (handle) {
+    const chUrl =
+      `https://www.googleapis.com/youtube/v3/channels?part=id,snippet` +
+      `&forHandle=${encodeURIComponent(handle.replace(/^@/, ""))}&key=${key}`;
+    const chRes = await fetch(chUrl, { cache: "no-store" });
+    const chData = (await chRes.json()) as {
+      items?: { id: string; snippet?: { title?: string } }[];
+    };
+    const ch = chData.items?.[0];
+    if (ch) {
+      resolvedChannelId = ch.id;
+      handleInfo = { handle, channelId: ch.id, title: ch.snippet?.title ?? "" };
+    } else {
+      return NextResponse.json({ error: `Could not resolve handle @${handle}`, raw: chData });
+    }
+  }
+
+  const channelId = resolvedChannelId;
+  // In handle mode we list the channel's recent uploads (no search query),
+  // since a team's own channel doesn't put "highlights" in titles.
+  const q = sp.get("q") ?? (handle ? "" : channelId ? team : `${team} highlights`);
+  // Team-channel listing doesn't require the word "highlight"; league search does.
+  const requireHighlight = sp.get("reqHl")
+    ? sp.get("reqHl") === "1"
+    : !handle;
   const hours = parseInt(sp.get("hours") ?? "36", 10);
   const order = sp.get("order") ?? "date";
   const publishedAfter = new Date(Date.now() - hours * 3600 * 1000).toISOString();
@@ -68,7 +96,8 @@ export async function GET(req: NextRequest) {
   try {
     const searchUrl =
       `${SEARCH}?part=snippet&type=video&order=${order}&maxResults=15` +
-      `&q=${encodeURIComponent(q)}&publishedAfter=${publishedAfter}` +
+      (q ? `&q=${encodeURIComponent(q)}` : "") +
+      `&publishedAfter=${publishedAfter}` +
       (channelId ? `&channelId=${channelId}` : "") +
       `&key=${key}`;
     const sres = await fetch(searchUrl, { cache: "no-store" });
@@ -84,7 +113,15 @@ export async function GET(req: NextRequest) {
       .filter((x): x is string => !!x);
 
     if (ids.length === 0) {
-      return NextResponse.json({ team, q, publishedAfter, candidates: [], note: "no results" });
+      return NextResponse.json({
+        team,
+        q,
+        handleInfo,
+        channelId: channelId ?? null,
+        publishedAfter,
+        candidates: [],
+        note: "no results",
+      });
     }
 
     const vUrl = `${VIDEOS}?part=snippet,contentDetails&id=${ids.join(",")}&key=${key}`;
@@ -106,8 +143,14 @@ export async function GET(req: NextRequest) {
       const hasTeam = tl.includes(lower) || (lastWord.length >= 3 && tl.includes(lastWord));
       const hasHighlight = /highlight/i.test(title);
       const excluded = EXCLUDE.test(title);
-      const goodDuration = durationSec >= 180 && durationSec <= 1200;
-      const passes = hasTeam && hasHighlight && !excluded && goodDuration;
+      const goodDuration = durationSec >= 120 && durationSec <= 1200;
+      // In handle (team-channel) mode we trust the channel and don't require
+      // the word "highlight" in the title — just duration + not-excluded.
+      const passes =
+        (handle ? true : hasTeam) &&
+        (requireHighlight ? hasHighlight : true) &&
+        !excluded &&
+        goodDuration;
       return {
         title,
         channel,
@@ -126,7 +169,9 @@ export async function GET(req: NextRequest) {
       team,
       q,
       league: league ?? null,
+      handleInfo,
       channelId: channelId ?? null,
+      requireHighlight,
       publishedAfter,
       selected: selected
         ? { title: selected.title, channel: selected.channel, mins: selected.mins, url: selected.url }
