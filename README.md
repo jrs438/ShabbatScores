@@ -7,7 +7,7 @@ An always-on dashboard for Shabbat. Set it up once before Shabbat starts; for th
 - **Live sports** across MLB, NFL, NBA, NHL, college football, college basketball
 - **Featured gamecast** — when one of your favorite teams is playing live, you get the hero card with sport-specific detail (baseball diamond + runners, football down & distance + possession, basketball/hockey clock & period, plus last play and win probability)
 - **Compact score ticker** at the bottom cycling through every league with games today
-- **Live video highlights** — auto-playing muted clips from MLB / NBA / NFL / NHL / ESPN YouTube channels, filtered to your **Primary** teams only. Plays newest clip, advances when each ends. Can be turned off entirely in Settings for Shabbat observance.
+- **Morning highlights (7am–noon ET)** — a large video player on the main column showing each **Primary** team's full game recap (pulled from the team's official YouTube channel, league channel as fallback) plus a daily all-sports Top 10 reel. Each plays in full, then advances. Pro leagues only — college isn't supported. Can be turned off entirely in Settings for Shabbat observance.
 - **News ticker** scrolling your chosen mix of Top/Mainstream, US, World, Israel, and Sports sources (configurable)
 - **Social feed** showing the 10 most recent posts from Telegram public channels and Bluesky accounts of your choice, cycling 2 at a time every 12 seconds
 - **Shabbat times** — parashah or holiday, candle-lighting, havdalah, plus the Hebrew date
