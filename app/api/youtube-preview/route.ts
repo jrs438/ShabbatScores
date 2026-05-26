@@ -15,6 +15,15 @@ export const revalidate = 0;
 const SEARCH = "https://www.googleapis.com/youtube/v3/search";
 const VIDEOS = "https://www.googleapis.com/youtube/v3/videos";
 
+// Official league channels — searching WITHIN these (channelId param) avoids
+// the spam/re-uploader flood that pollutes an open "team highlights" search.
+const OFFICIAL_CHANNELS: Record<string, string> = {
+  mlb: "UCoLrcjPV5PbUrUyXq5mjc_A",
+  nba: "UCWJ2lWNubArHWmf3FIHbfcQ",
+  nfl: "UCDVYQ4Zhbm3S2dlz7P1GBDg",
+  nhl: "UCqFMzb-4AUf6WAIbl132QKA",
+};
+
 // Title words that signal NOT a game-highlight recap.
 const EXCLUDE =
   /press conf|interview|preview|reaction|mic'?d|podcast|pregame|post-?game show|full game|replay|live stream|livestream|top \d+ plays|every|best of|trailer/i;
@@ -40,7 +49,11 @@ export async function GET(req: NextRequest) {
 
   const sp = req.nextUrl.searchParams;
   const team = sp.get("team") ?? "New York Mets";
-  const q = sp.get("q") ?? `${team} highlights`;
+  const league = sp.get("league"); // mlb | nba | nfl | nhl — restricts to official channel
+  const channelId = sp.get("channelId") ?? (league ? OFFICIAL_CHANNELS[league] : undefined);
+  // When searching within an official channel, query the team name alone;
+  // otherwise append "highlights" to a broad search.
+  const q = sp.get("q") ?? (channelId ? team : `${team} highlights`);
   const hours = parseInt(sp.get("hours") ?? "36", 10);
   const order = sp.get("order") ?? "date";
   const publishedAfter = new Date(Date.now() - hours * 3600 * 1000).toISOString();
@@ -52,7 +65,9 @@ export async function GET(req: NextRequest) {
   try {
     const searchUrl =
       `${SEARCH}?part=snippet&type=video&order=${order}&maxResults=15` +
-      `&q=${encodeURIComponent(q)}&publishedAfter=${publishedAfter}&key=${key}`;
+      `&q=${encodeURIComponent(q)}&publishedAfter=${publishedAfter}` +
+      (channelId ? `&channelId=${channelId}` : "") +
+      `&key=${key}`;
     const sres = await fetch(searchUrl, { cache: "no-store" });
     if (!sres.ok) {
       const t = await sres.text();
@@ -107,6 +122,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       team,
       q,
+      league: league ?? null,
+      channelId: channelId ?? null,
       publishedAfter,
       selected: selected
         ? { title: selected.title, channel: selected.channel, mins: selected.mins, url: selected.url }
