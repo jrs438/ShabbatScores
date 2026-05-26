@@ -156,7 +156,13 @@ function CyclingPanel({ games }: { games: Game[] }) {
   );
 }
 
-export default function SportsGrid({ settings }: { settings?: UserSettings }) {
+export default function SportsGrid({
+  settings,
+  compact,
+}: {
+  settings?: UserSettings;
+  compact?: boolean;
+}) {
   // Pass team IDs to the server so it knows which games to return (saves us
   // pulling every game across every league).
   const url = useMemo(() => {
@@ -255,7 +261,7 @@ export default function SportsGrid({ settings }: { settings?: UserSettings }) {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-500">
             Your teams
           </h3>
-          {featured ? (
+          {featured || compact ? (
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
               {followedGames.map((g) => (
                 <GameCard key={g.id} g={g} compact />

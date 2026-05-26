@@ -75,7 +75,7 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
           <div className="flex flex-col gap-4">
             {showVideo && <MorningVideo settings={settings} />}
-            <SportsGrid settings={ready ? settings : undefined} />
+            <SportsGrid settings={ready ? settings : undefined} compact={showVideo} />
           </div>
           <SocialFeedCard settings={ready ? settings : undefined} />
         </div>
