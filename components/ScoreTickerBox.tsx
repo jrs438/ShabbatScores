@@ -39,7 +39,7 @@ function ScoreLine({ g }: { g: Game }) {
 }
 
 export default function ScoreTickerBox() {
-  const { data } = usePolling<Resp>("/api/scoreticker", 45_000, { byLeague: {} });
+  const { data } = usePolling<Resp>("/api/scoreticker", 90_000, { byLeague: {} });
   const byLeague = data?.byLeague ?? {};
 
   // Only show leagues that have at least one game today.

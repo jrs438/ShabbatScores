@@ -3,7 +3,6 @@ import { getFullCatalog } from "@/lib/teamCatalog";
 import { teamRecap, topPlays, LEAGUE_FALLBACK, type VideoPick } from "@/lib/youtube";
 
 export const revalidate = 1200; // 20 min
-export const dynamic = "force-dynamic";
 
 const SUPPORTED = new Set(Object.keys(LEAGUE_FALLBACK)); // mlb, nba, nfl, nhl
 

@@ -92,7 +92,7 @@ export default function SocialFeedCard({
     return q ? `/api/social?${q}` : "/api/social";
   }, [settings]);
 
-  const { data, lastFetched } = usePolling<Resp>(url, 120_000, { posts: [] });
+  const { data, lastFetched } = usePolling<Resp>(url, 180_000, { posts: [] });
   const allPosts = data?.posts ?? [];
   const posts = useMemo(() => allPosts.slice(0, POST_LIMIT), [allPosts]);
 

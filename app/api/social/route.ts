@@ -3,7 +3,6 @@ import { fetchTelegramChannel, type SocialPost } from "@/lib/telegram";
 import { fetchBlueskyAuthor } from "@/lib/bluesky";
 
 export const revalidate = 120;
-export const dynamic = "force-dynamic";
 
 // Defaults used when the client doesn't pass overrides.
 const DEFAULT_TELEGRAM = ["osint613"];

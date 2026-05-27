@@ -32,7 +32,7 @@ export default function NewsTicker({ settings }: { settings?: UserSettings }) {
   }, [settings]);
 
   const news = usePolling<NewsResp>(newsUrl, 10 * 60_000, { items: [] });
-  const sports = usePolling<SportsResp>("/api/sports", 30_000, { games: [] });
+  const sports = usePolling<SportsResp>("/api/sports", 60_000, { games: [] });
 
   const items = useMemo(() => {
     const headlines = (news.data?.items ?? []).map((n) => ({

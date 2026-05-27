@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { HebcalInfo } from "@/lib/types";
 
 export const revalidate = 3600;
-export const dynamic = "force-dynamic";
 
 const DEFAULT_ZIP = "07652";
 const HDATE_URL = "https://www.hebcal.com/converter?cfg=json&g2h=1";

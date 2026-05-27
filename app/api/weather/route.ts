@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { WeatherNow } from "@/lib/types";
 
 export const revalidate = 600;
-export const dynamic = "force-dynamic";
 
 const DEFAULT_LAT = 40.9445;
 const DEFAULT_LON = -74.0754;
