@@ -3,7 +3,6 @@ import { XMLParser } from "fast-xml-parser";
 import type { NewsItem, NewsCategory } from "@/lib/types";
 
 export const revalidate = 600;
-export const dynamic = "force-dynamic";
 
 type Feed = { url: string; source: string; category: NewsCategory };
 

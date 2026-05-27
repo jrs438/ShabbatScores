@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getAllRelevantGames } from "@/lib/espn";
 
 export const revalidate = 30;
-export const dynamic = "force-dynamic";
 
 function idSet(value: string | null): Set<string> | undefined {
   if (!value) return undefined;

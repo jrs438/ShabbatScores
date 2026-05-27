@@ -174,7 +174,7 @@ export default function SportsGrid({
     if (settings.primary.length) params.set("primary", settings.primary.join(","));
     return `/api/sports?${params.toString()}`;
   }, [settings]);
-  const { data, lastFetched } = usePolling<Resp>(url, 30_000, { games: [] });
+  const { data, lastFetched } = usePolling<Resp>(url, 60_000, { games: [] });
   const games = useMemo(() => applySettings(data?.games ?? [], settings), [data, settings]);
 
   const { featuredGames, followedGames, leaguePlayoffs } = useMemo(() => {
