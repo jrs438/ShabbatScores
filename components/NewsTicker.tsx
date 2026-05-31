@@ -9,7 +9,7 @@ type SportsResp = { games: Game[] };
 
 // Seconds of screen time per item — higher = slower scroll. The total
 // animation duration scales with item count so speed stays constant.
-const SECONDS_PER_ITEM = 9;
+const SECONDS_PER_ITEM = 5;
 
 function scoreSnippet(g: Game): string {
   const status =
@@ -52,7 +52,7 @@ export default function NewsTicker({ settings }: { settings?: UserSettings }) {
   }, [news.data, sports.data]);
 
   const doubled = useMemo(() => [...items, ...items], [items]);
-  const durationSec = Math.max(60, items.length * SECONDS_PER_ITEM);
+  const durationSec = Math.max(40, items.length * SECONDS_PER_ITEM);
 
   return (
     <div className="flex h-full items-center overflow-hidden">
