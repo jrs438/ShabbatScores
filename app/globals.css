@@ -22,6 +22,10 @@ body {
   white-space: nowrap;
   will-change: transform;
 }
+@keyframes ticker {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
 
 .live-dot {
   width: 8px;
