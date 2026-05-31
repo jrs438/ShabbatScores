@@ -9,7 +9,7 @@ type Resp = { posts: SocialPost[]; updatedAt?: string };
 const POSTS_PER_PAGE = 2;
 const POST_LIMIT = 10;
 const CYCLE_MS = 12_000;
-const TEXT_LIMIT = 200;
+const TEXT_LIMIT = 400;
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -48,7 +48,7 @@ function PostItem({ p }: { p: SocialPost }) {
         <span>{relativeTime(p.publishedAt)}</span>
       </div>
       {shown && (
-        <div className="line-clamp-4 whitespace-pre-line text-sm leading-snug text-zinc-100">
+        <div className="whitespace-pre-line text-sm leading-snug text-zinc-100">
           {shown}
         </div>
       )}
@@ -60,7 +60,7 @@ function PostItem({ p }: { p: SocialPost }) {
               key={i}
               src={src}
               alt=""
-              className="h-20 w-full rounded object-cover"
+              className="h-24 w-full rounded object-cover"
               loading="lazy"
               referrerPolicy="no-referrer"
             />
@@ -78,7 +78,7 @@ function PostItem({ p }: { p: SocialPost }) {
 
 export default function SocialFeedCard({
   settings,
-  maxHeight = "calc(100vh - 480px)",
+  maxHeight = "calc(100vh - 400px)",
 }: {
   settings?: UserSettings;
   maxHeight?: string;
@@ -96,11 +96,26 @@ export default function SocialFeedCard({
   const allPosts = data?.posts ?? [];
   const posts = useMemo(() => allPosts.slice(0, POST_LIMIT), [allPosts]);
 
+  // Posts with media (photos or video) get their own page so they have room
+  // to breathe; consecutive text-only posts pair up two-per-page.
   const pages = useMemo(() => {
     const out: SocialPost[][] = [];
-    for (let i = 0; i < posts.length; i += POSTS_PER_PAGE) {
-      out.push(posts.slice(i, i + POSTS_PER_PAGE));
+    let buffer: SocialPost[] = [];
+    const flush = () => {
+      if (buffer.length) out.push(buffer);
+      buffer = [];
+    };
+    for (const p of posts) {
+      const hasMedia = p.photos.length > 0 || p.hasVideo;
+      if (hasMedia) {
+        flush();
+        out.push([p]);
+      } else {
+        buffer.push(p);
+        if (buffer.length >= POSTS_PER_PAGE) flush();
+      }
     }
+    flush();
     return out;
   }, [posts]);
 

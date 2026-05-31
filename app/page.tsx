@@ -77,7 +77,7 @@ export default function Page() {
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_360px]">
               <MorningVideo settings={settings} />
-              <SocialFeedCard settings={ready ? settings : undefined} maxHeight="38vh" />
+              <SocialFeedCard settings={ready ? settings : undefined} maxHeight="44vh" />
             </div>
             <SportsGrid settings={ready ? settings : undefined} compact wide />
           </div>
