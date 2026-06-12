@@ -13,6 +13,7 @@ const LEAGUE_FILTERS: { key: LeagueKey | "all"; label: string }[] = [
   { key: "nhl", label: "NHL" },
   { key: "college-football", label: "CFB" },
   { key: "mens-college-basketball", label: "CBB" },
+  { key: "world-cup", label: "WC" },
 ];
 
 type Props = {

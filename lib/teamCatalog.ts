@@ -9,6 +9,7 @@ const CATALOG_LEAGUES: LeagueKey[] = [
   "nhl",
   "college-football",
   "mens-college-basketball",
+  "world-cup",
 ];
 
 export type CatalogTeam = {

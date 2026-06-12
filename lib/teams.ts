@@ -4,9 +4,10 @@ export type LeagueKey =
   | "nba"
   | "nhl"
   | "college-football"
-  | "mens-college-basketball";
+  | "mens-college-basketball"
+  | "world-cup";
 
-export type SportKey = "baseball" | "football" | "basketball" | "hockey";
+export type SportKey = "baseball" | "football" | "basketball" | "hockey" | "soccer";
 
 export type FollowedTeam = {
   league: LeagueKey;
@@ -114,6 +115,7 @@ export const LEAGUE_SPORT_PATH: Record<LeagueKey, string> = {
   nhl: "hockey/nhl",
   "college-football": "football/college-football",
   "mens-college-basketball": "basketball/mens-college-basketball",
+  "world-cup": "soccer/fifa.world",
 };
 
 export const LEAGUE_LABEL: Record<LeagueKey, string> = {
@@ -123,6 +125,7 @@ export const LEAGUE_LABEL: Record<LeagueKey, string> = {
   nhl: "NHL",
   "college-football": "CFB",
   "mens-college-basketball": "CBB",
+  "world-cup": "WC",
 };
 
 export const FOLLOWED_TEAM_ESPN_IDS = new Set(FOLLOWED_TEAMS.map((t) => t.espnId));

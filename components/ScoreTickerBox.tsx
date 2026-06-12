@@ -5,7 +5,7 @@ import type { Game } from "@/lib/types";
 
 type Resp = { byLeague: Record<string, Game[]> };
 
-const LEAGUE_ORDER = ["MLB", "NBA", "NHL", "NFL", "CFB", "CBB"];
+const LEAGUE_ORDER = ["MLB", "NBA", "NHL", "NFL", "WC", "CFB", "CBB"];
 
 function ScoreLine({ g }: { g: Game }) {
   const isLive = g.status === "live";
