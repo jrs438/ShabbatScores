@@ -140,10 +140,14 @@ export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEven
   });
 }
 
-function isPlayoffEvent(_league: LeagueKey, ev: EspnEvent): boolean {
+function isPlayoffEvent(league: LeagueKey, ev: EspnEvent): boolean {
   // seasonType 3 = playoffs/postseason across MLB/NBA/NHL/NFL.
   // (Previously also matched on notes headlines, but those triggered
   // false positives on regular-season "championship standings" headlines.)
+  // The World Cup is a tournament — every match counts as "playoff" so it
+  // surfaces in the around-the-league cycling panel without anyone needing
+  // to follow specific national teams.
+  if (league === "world-cup") return true;
   return ev.season?.type === 3;
 }
 
@@ -167,6 +171,7 @@ const SPORT_FROM_LEAGUE: Record<LeagueKey, string> = {
   nhl: "hockey",
   "college-football": "football",
   "mens-college-basketball": "basketball",
+  "world-cup": "soccer",
 };
 
 export function toGame(league: LeagueKey, ev: EspnEvent): Game {
@@ -284,6 +289,7 @@ const ALL_LEAGUES: LeagueKey[] = [
   "nhl",
   "college-football",
   "mens-college-basketball",
+  "world-cup",
 ];
 
 // All games today across all leagues (no filtering). Used by the bottom
