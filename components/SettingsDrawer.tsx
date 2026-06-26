@@ -154,6 +154,29 @@ export default function SettingsDrawer({ open, onClose, settings, onChange, onRe
               {settings.videoHighlights ? "On" : "Off"}
             </span>
           </button>
+
+          <button
+            onClick={() => onChange({ nhlDraftTracker: !settings.nhlDraftTracker })}
+            className={`mt-2 flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold ${
+              settings.nhlDraftTracker
+                ? "bg-accent2/20 text-accent2"
+                : "bg-zinc-800 text-zinc-300"
+            }`}
+          >
+            <span className="flex flex-col items-start">
+              <span>NHL Draft tracker</span>
+              <span className="text-[10px] font-normal text-zinc-500">
+                Live picks alongside the gamecast — turn on during draft weekend.
+              </span>
+            </span>
+            <span
+              className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                settings.nhlDraftTracker ? "bg-accent2/30" : "bg-zinc-700"
+              }`}
+            >
+              {settings.nhlDraftTracker ? "On" : "Off"}
+            </span>
+          </button>
         </section>
 
         <section className="border-t border-zinc-800 px-5 py-4">

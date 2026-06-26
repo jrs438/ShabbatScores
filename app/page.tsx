@@ -12,6 +12,7 @@ import ScoreTickerBox from "@/components/ScoreTickerBox";
 import HelpDrawer from "@/components/HelpDrawer";
 import InstallHint from "@/components/InstallHint";
 import MorningVideo from "@/components/MorningVideo";
+import NhlDraftCard from "@/components/NhlDraftCard";
 import { useSettings } from "@/components/useSettings";
 import { currentPhase, phaseShowsVideo, type DayPhase } from "@/lib/dayphase";
 
@@ -30,6 +31,7 @@ export default function Page() {
 
   const showVideo =
     ready && phaseShowsVideo(phase) && settings.videoHighlights !== false;
+  const draftSlot = ready && settings.nhlDraftTracker ? <NhlDraftCard /> : undefined;
 
   return (
     <main className="relative min-h-screen pb-20">
@@ -79,11 +81,11 @@ export default function Page() {
               <MorningVideo settings={settings} />
               <SocialFeedCard settings={ready ? settings : undefined} maxHeight="44vh" />
             </div>
-            <SportsGrid settings={ready ? settings : undefined} compact wide />
+            <SportsGrid settings={ready ? settings : undefined} compact wide sideSlot={draftSlot} />
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
-            <SportsGrid settings={ready ? settings : undefined} />
+            <SportsGrid settings={ready ? settings : undefined} sideSlot={draftSlot} />
             <SocialFeedCard settings={ready ? settings : undefined} />
           </div>
         )}
