@@ -160,10 +160,12 @@ export default function SportsGrid({
   settings,
   compact,
   wide,
+  sideSlot,
 }: {
   settings?: UserSettings;
   compact?: boolean;
   wide?: boolean;
+  sideSlot?: React.ReactNode;
 }) {
   // Pass team IDs to the server so it knows which games to return (saves us
   // pulling every game across every league).
@@ -235,26 +237,31 @@ export default function SportsGrid({
         )}
       </div>
 
-      {featured && (
-        <div>
-          <FeaturedGameCard g={featured} />
-          {featuredGames.length > 1 && (
-            <div className="mt-2 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
-              <span>
-                Live · {heroIdx + 1}/{featuredGames.length}
-              </span>
-              <div className="flex gap-1.5">
-                {featuredGames.map((g, i) => (
-                  <span
-                    key={g.id}
-                    className={`h-1 rounded-full transition-all ${
-                      i === heroIdx ? "w-5 bg-bad" : "w-1.5 bg-zinc-700"
-                    }`}
-                  />
-                ))}
-              </div>
+      {(featured || sideSlot) && (
+        <div className={sideSlot && featured ? "grid grid-cols-1 gap-3 md:grid-cols-2" : ""}>
+          {featured && (
+            <div>
+              <FeaturedGameCard g={featured} />
+              {featuredGames.length > 1 && (
+                <div className="mt-2 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider text-zinc-500">
+                  <span>
+                    Live · {heroIdx + 1}/{featuredGames.length}
+                  </span>
+                  <div className="flex gap-1.5">
+                    {featuredGames.map((g, i) => (
+                      <span
+                        key={g.id}
+                        className={`h-1 rounded-full transition-all ${
+                          i === heroIdx ? "w-5 bg-bad" : "w-1.5 bg-zinc-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
+          {sideSlot}
         </div>
       )}
 

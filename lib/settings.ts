@@ -10,6 +10,7 @@ export type UserSettings = {
   blueskyHandles: string[]; // handles, e.g. ["avivaklompas.bsky.social"]
   videoHighlights: boolean;
   newsCategories: string[]; // top | us | world | israel | sports
+  nhlDraftTracker: boolean; // temporary card alongside the gamecast
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   blueskyHandles: [],
   videoHighlights: true,
   newsCategories: ["top", "us", "israel", "sports"],
+  nhlDraftTracker: false,
 };
 
 const STORAGE_KEY = "shabbatscores:settings:v3";
@@ -129,6 +131,7 @@ export function settingsToQuery(s: UserSettings): string {
   if (s.blueskyHandles.length > 0) params.set("bs", s.blueskyHandles.join(","));
   if (!s.videoHighlights) params.set("vh", "0");
   if (s.newsCategories.length > 0) params.set("nc", s.newsCategories.join(","));
+  if (s.nhlDraftTracker) params.set("dr", "1");
   return params.toString();
 }
 
@@ -153,6 +156,9 @@ export function settingsFromQuery(search: string): Partial<UserSettings> | null 
   if (vh === "1") out.videoHighlights = true;
   const nc = params.get("nc");
   if (nc) out.newsCategories = nc.split(",").filter(Boolean);
+  const dr = params.get("dr");
+  if (dr === "1") out.nhlDraftTracker = true;
+  if (dr === "0") out.nhlDraftTracker = false;
   return Object.keys(out).length > 0 ? out : null;
 }
 
