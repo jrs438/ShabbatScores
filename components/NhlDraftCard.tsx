@@ -25,7 +25,9 @@ function relativeTime(iso: string | null): string {
 
 export default function NhlDraftCard() {
   const { data, lastFetched } = usePolling<Resp>("/api/nhl-draft", 60_000, { picks: [] });
-  const picks = data?.picks ?? [];
+  // Defensive: if the API returns anything unexpected, coerce to empty and
+  // never let this component crash the surrounding SportsGrid.
+  const picks = Array.isArray(data?.picks) ? data.picks : [];
   const latest = picks.slice(0, 12);
 
   return (
