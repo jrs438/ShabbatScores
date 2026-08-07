@@ -1,69 +1,41 @@
 import { NextResponse } from "next/server";
-import { LEAGUE_SPORT_PATH, type LeagueKey } from "@/lib/teams";
+import { fetchMlbGames } from "@/lib/mlbApi";
+import { fetchNhlGames } from "@/lib/nhlApi";
+import { todayInEastern } from "@/lib/scoreboardDates";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
-const LEAGUES: LeagueKey[] = [
-  "mlb",
-  "nfl",
-  "nba",
-  "nhl",
-  "college-football",
-  "mens-college-basketball",
-  "world-cup",
-];
-
-function todayInEastern(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  return `${get("year")}${get("month")}${get("day")}`;
-}
+// Verifies our replacement sources for the ESPN-blocked leagues:
+//   MLB → statsapi.mlb.com
+//   NHL → api-web.nhle.com
+// Returns per-source game counts + a sample so we can confirm data flow.
 
 export async function GET() {
   const date = todayInEastern();
-  const rows: unknown[] = [];
-  for (const league of LEAGUES) {
-    const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
-    try {
-      const started = Date.now();
-      const res = await fetch(url, {
-        cache: "no-store",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Accept: "application/json, text/plain, */*",
-          "Accept-Language": "en-US,en;q=0.9",
-          Referer: "https://www.espn.com/",
-          Origin: "https://www.espn.com",
-        },
-      });
-      const ms = Date.now() - started;
-      if (!res.ok) {
-        const body = (await res.text()).slice(0, 200);
-        rows.push({ league, url, status: res.status, ms, body });
-        continue;
-      }
-      const data = (await res.json()) as { events?: { date?: string; shortName?: string }[] };
-      const events = data.events ?? [];
-      rows.push({
-        league,
-        url,
-        status: res.status,
-        ms,
-        eventCount: events.length,
-        sampleTitles: events.slice(0, 3).map((e) => e.shortName ?? ""),
-        sampleDates: events.slice(0, 3).map((e) => e.date ?? ""),
-      });
-    } catch (e) {
-      rows.push({ league, url, error: String(e) });
-    }
-  }
-  return NextResponse.json({ date, rows });
+  const [mlb, nhl] = await Promise.allSettled([
+    fetchMlbGames([date]),
+    fetchNhlGames([date]),
+  ]);
+
+  const summarize = (r: PromiseSettledResult<Awaited<ReturnType<typeof fetchMlbGames>>>) => {
+    if (r.status !== "fulfilled") return { ok: false, error: String(r.reason) };
+    const games = r.value;
+    return {
+      ok: true,
+      count: games.length,
+      sample: games.slice(0, 5).map((g) => ({
+        matchup: `${g.away.abbr} @ ${g.home.abbr}`,
+        status: g.status,
+        detail: g.statusDetail,
+        score: `${g.away.score ?? "-"}-${g.home.score ?? "-"}`,
+        homeId: g.home.id,
+      })),
+    };
+  };
+
+  return NextResponse.json({
+    date,
+    sources: { mlb: summarize(mlb), nhl: summarize(nhl) },
+  });
 }
