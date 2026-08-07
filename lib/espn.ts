@@ -10,6 +10,17 @@ import {
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 
+// ESPN's unofficial site.api is fronted by an Akamai-style WAF that 403s
+// bot-looking clients. Sending browser headers gets past it.
+const ESPN_HEADERS: HeadersInit = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  Accept: "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+  Referer: "https://www.espn.com/",
+  Origin: "https://www.espn.com",
+};
+
 function todayInEastern(): string {
   // YYYYMMDD in America/New_York
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -116,7 +127,7 @@ export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEven
       const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
       const res = await fetch(url, {
         next: { revalidate: 30 },
-        headers: { "User-Agent": "ShabbatScores/1.0" },
+        headers: ESPN_HEADERS,
       });
       if (!res.ok) continue;
       const data = (await res.json()) as { events?: EspnEvent[] };
@@ -235,7 +246,7 @@ export async function fetchLiveDetail(league: LeagueKey, eventId: string): Promi
   try {
     const res = await fetch(url, {
       next: { revalidate: 20 },
-      headers: { "User-Agent": "ShabbatScores/1.0" },
+      headers: ESPN_HEADERS,
     });
     if (!res.ok) return null;
     const data = (await res.json()) as EspnSummary;
