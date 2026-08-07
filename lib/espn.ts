@@ -7,11 +7,16 @@ import {
   PRIMARY_TEAM_ESPN_IDS,
   teamFullId,
 } from "./teams";
+import { easternDateString, scoreboardDates } from "./scoreboardDates";
+import { fetchMlbGames } from "./mlbApi";
+import { fetchNhlGames } from "./nhlApi";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 
 // ESPN's unofficial site.api is fronted by an Akamai-style WAF that 403s
-// bot-looking clients. Sending browser headers gets past it.
+// bot-looking clients. Sending browser headers gets past it *sometimes*;
+// for the leagues where we have better free official sources (MLB, NHL) we
+// bypass ESPN entirely — see fetchGamesForLeague below.
 const ESPN_HEADERS: HeadersInit = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -20,53 +25,6 @@ const ESPN_HEADERS: HeadersInit = {
   Referer: "https://www.espn.com/",
   Origin: "https://www.espn.com",
 };
-
-function todayInEastern(): string {
-  // YYYYMMDD in America/New_York
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  return `${get("year")}${get("month")}${get("day")}`;
-}
-
-function yesterdayInEastern(): string {
-  // Use the Eastern-time calendar date and step back one day. We anchor at
-  // noon UTC of that date to avoid timezone-edge slips.
-  const todayET = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date()); // YYYY-MM-DD
-  const d = new Date(`${todayET}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() - 1);
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}${m}${day}`;
-}
-
-function currentEasternHour(): number {
-  const hourStr = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "2-digit",
-    hour12: false,
-  }).format(new Date());
-  return parseInt(hourStr, 10);
-}
-
-function easternDateString(iso: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(iso));
-}
 
 type EspnTeam = {
   id: string;
@@ -112,17 +70,8 @@ function mapStatus(state: string, name: string): GameStatus {
 }
 
 export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEvent[]> {
-  // Score windows by Eastern hour:
-  //   before noon  → yesterday only (last night's finals)
-  //   noon–5pm     → yesterday + today (finals + the day's schedule)
-  //   5pm onward   → today only
-  const h = currentEasternHour();
-  const today = todayInEastern();
-  const yesterday = yesterdayInEastern();
-  const datesToFetch = h < 12 ? [yesterday] : h < 17 ? [yesterday, today] : [today];
-
   const allEvents: EspnEvent[] = [];
-  for (const date of datesToFetch) {
+  for (const date of scoreboardDates()) {
     try {
       const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
       const res = await fetch(url, {
@@ -303,16 +252,25 @@ const ALL_LEAGUES: LeagueKey[] = [
   "world-cup",
 ];
 
+// Per-league source dispatch. MLB and NHL use their own free official APIs
+// which work from Vercel; everything else still tries ESPN and falls back to
+// empty when its WAF 403s. Returns already-normalized Game[].
+async function fetchGamesForLeague(league: LeagueKey): Promise<Game[]> {
+  if (league === "mlb") return fetchMlbGames(scoreboardDates());
+  if (league === "nhl") return fetchNhlGames(scoreboardDates());
+  const events = await fetchLeagueScoreboard(league);
+  return events.map((ev) => toGame(league, ev));
+}
+
 // All games today across all leagues (no filtering). Used by the bottom
 // scoreticker box.
 export async function getAllLeagueGamesToday(): Promise<Game[]> {
   const results = await Promise.allSettled(
     ALL_LEAGUES.map(async (league) => {
       try {
-        const events = await fetchLeagueScoreboard(league);
-        return events.map((ev) => toGame(league, ev));
+        return await fetchGamesForLeague(league);
       } catch (e) {
-        console.error(`ESPN ${league} (ticker) failed`, e);
+        console.error(`${league} (ticker) failed`, e);
         return [] as Game[];
       }
     })
@@ -329,10 +287,9 @@ export async function getAllRelevantGames(filter?: GameFilter): Promise<Game[]> 
   const results = await Promise.allSettled(
     ALL_LEAGUES.map(async (league) => {
       try {
-        const events = await fetchLeagueScoreboard(league);
-        return events.map((ev) => toGame(league, ev));
+        return await fetchGamesForLeague(league);
       } catch (e) {
-        console.error(`ESPN ${league} failed`, e);
+        console.error(`${league} failed`, e);
         return [] as Game[];
       }
     })
