@@ -1,6 +1,5 @@
-import { LEAGUE_SPORT_PATH, teamFullId, type LeagueKey } from "./teams";
-
-const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
+import type { LeagueKey } from "./teams";
+import { STATIC_CATALOG } from "./staticCatalog";
 
 const CATALOG_LEAGUES: LeagueKey[] = [
   "mlb",
@@ -21,46 +20,15 @@ export type CatalogTeam = {
   logo: string | null;
 };
 
-type EspnTeamRaw = {
-  id: string;
-  abbreviation?: string;
-  displayName?: string;
-  shortDisplayName?: string;
-  name?: string;
-  logos?: { href: string }[];
-};
-type EspnTeamsResp = {
-  sports?: { leagues?: { teams?: { team: EspnTeamRaw }[] }[] }[];
-};
-
-async function fetchLeagueCatalog(league: LeagueKey): Promise<CatalogTeam[]> {
-  const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/teams?limit=500`;
-  const res = await fetch(url, {
-    next: { revalidate: 86400 },
-    headers: { "User-Agent": "ShabbatScores/1.0" },
-  });
-  if (!res.ok) throw new Error(`Catalog ${league} -> ${res.status}`);
-  const data = (await res.json()) as EspnTeamsResp;
-  const teams = data.sports?.[0]?.leagues?.[0]?.teams ?? [];
-  return teams.map((t) => {
-    const team = t.team;
-    return {
-      id: teamFullId(league, team.id),
-      league,
-      abbr: team.abbreviation ?? "",
-      name: team.shortDisplayName ?? team.name ?? team.displayName ?? "",
-      displayName: team.displayName ?? team.name ?? "",
-      logo: team.logos?.[0]?.href ?? null,
-    };
-  });
-}
-
+// Team catalog now comes from a hardcoded table (lib/staticCatalog.ts). We
+// previously fetched from ESPN's /teams endpoint, but ESPN's WAF started
+// 403-blocking Vercel across the board — the settings picker went empty and
+// morning-video couldn't resolve team names. Static data is more reliable
+// anyway: team names change rarely, and we control canonical IDs.
 export async function getFullCatalog(): Promise<Record<LeagueKey, CatalogTeam[]>> {
-  const results = await Promise.allSettled(CATALOG_LEAGUES.map(fetchLeagueCatalog));
   const out: Record<string, CatalogTeam[]> = {};
-  CATALOG_LEAGUES.forEach((l, i) => {
-    const r = results[i];
-    out[l] = r.status === "fulfilled" ? r.value : [];
-  });
+  for (const l of CATALOG_LEAGUES) {
+    out[l] = STATIC_CATALOG[l] ?? [];
+  }
   return out as Record<LeagueKey, CatalogTeam[]>;
 }
