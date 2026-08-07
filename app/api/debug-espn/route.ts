@@ -35,7 +35,14 @@ export async function GET() {
       const started = Date.now();
       const res = await fetch(url, {
         cache: "no-store",
-        headers: { "User-Agent": "ShabbatScores/1.0" },
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Accept: "application/json, text/plain, */*",
+          "Accept-Language": "en-US,en;q=0.9",
+          Referer: "https://www.espn.com/",
+          Origin: "https://www.espn.com",
+        },
       });
       const ms = Date.now() - started;
       if (!res.ok) {
