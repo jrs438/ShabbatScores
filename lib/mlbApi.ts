@@ -4,18 +4,40 @@ import { teamFullId } from "./teams";
 // Free official MLB StatsAPI — no key, works from Vercel (unlike ESPN's WAF).
 const MLB_BASE = "https://statsapi.mlb.com/api/v1";
 
-// Map MLB StatsAPI team abbreviations to our canonical ESPN team IDs so
-// existing per-team user settings ("mlb:21" = Mets) keep working across the
-// data-source swap.
-const MLB_ABBR_TO_ESPN_ID: Record<string, string> = {
-  ARI: "29", ATL: "15", BAL: "1", BOS: "2", CHC: "16",
-  CWS: "4", CHW: "4", CIN: "17", CLE: "5", COL: "27",
-  DET: "6", HOU: "18", KC: "7", KCR: "7", LAA: "3",
-  LAD: "19", MIA: "28", MIL: "8", MIN: "9", NYM: "21",
-  NYY: "10", ATH: "11", OAK: "11", PHI: "22", PIT: "23",
-  SD: "25", SDP: "25", SEA: "12", SF: "26", SFG: "26",
-  STL: "24", TB: "30", TBR: "30", TEX: "13", TOR: "14",
-  WSH: "20", WSN: "20",
+// Map MLB StatsAPI team IDs (the ones in the schedule response) to our
+// canonical ESPN team IDs + abbreviations. The schedule endpoint doesn't
+// include abbreviation by default, so we look it up from team.id.
+const MLB_API_TEAM: Record<number, { abbr: string; espnId: string }> = {
+  108: { abbr: "LAA", espnId: "3" },
+  109: { abbr: "ARI", espnId: "29" },
+  110: { abbr: "BAL", espnId: "1" },
+  111: { abbr: "BOS", espnId: "2" },
+  112: { abbr: "CHC", espnId: "16" },
+  113: { abbr: "CIN", espnId: "17" },
+  114: { abbr: "CLE", espnId: "5" },
+  115: { abbr: "COL", espnId: "27" },
+  116: { abbr: "DET", espnId: "6" },
+  117: { abbr: "HOU", espnId: "18" },
+  118: { abbr: "KC", espnId: "7" },
+  119: { abbr: "LAD", espnId: "19" },
+  120: { abbr: "WSH", espnId: "20" },
+  121: { abbr: "NYM", espnId: "21" },
+  133: { abbr: "ATH", espnId: "11" },
+  134: { abbr: "PIT", espnId: "23" },
+  135: { abbr: "SD", espnId: "25" },
+  136: { abbr: "SEA", espnId: "12" },
+  137: { abbr: "SF", espnId: "26" },
+  138: { abbr: "STL", espnId: "24" },
+  139: { abbr: "TB", espnId: "30" },
+  140: { abbr: "TEX", espnId: "13" },
+  141: { abbr: "TOR", espnId: "14" },
+  142: { abbr: "MIN", espnId: "9" },
+  143: { abbr: "PHI", espnId: "22" },
+  144: { abbr: "ATL", espnId: "15" },
+  145: { abbr: "CWS", espnId: "4" },
+  146: { abbr: "MIA", espnId: "28" },
+  147: { abbr: "NYY", espnId: "10" },
+  158: { abbr: "MIL", espnId: "8" },
 };
 
 type MlbTeamSide = {
@@ -77,13 +99,14 @@ function statusDetail(g: MlbGame): string {
 }
 
 function teamInfo(t: MlbTeamSide | undefined) {
-  const abbr = t?.team?.abbreviation ?? "";
-  const espnId = MLB_ABBR_TO_ESPN_ID[abbr];
+  const meta = t?.team?.id ? MLB_API_TEAM[t.team.id] : undefined;
+  const abbr = meta?.abbr ?? t?.team?.abbreviation ?? "";
+  const espnId = meta?.espnId;
   const record = t?.leagueRecord
     ? `${t.leagueRecord.wins ?? 0}-${t.leagueRecord.losses ?? 0}`
     : undefined;
   return {
-    id: espnId ? teamFullId("mlb", espnId) : `mlb:unmapped-${abbr}`,
+    id: espnId ? teamFullId("mlb", espnId) : `mlb:unmapped-${t?.team?.id ?? ""}`,
     name: t?.team?.name ?? abbr,
     abbr,
     score: typeof t?.score === "number" ? t.score : null,
