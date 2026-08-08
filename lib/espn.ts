@@ -307,7 +307,21 @@ export async function getAllRelevantGames(filter?: GameFilter): Promise<Game[]> 
       })
       .filter((g) => g.followed || g.isPlayoff);
   } else {
-    games = games.filter((g) => g.followed || g.isPlayoff);
+    // No filter: fall back to the hardcoded default followed set, checked
+    // against the canonical league:espnId form (so non-ESPN sources like the
+    // MLB StatsAPI feed match too — they set g.followed = false internally).
+    const defaultFollowed = new Set(
+      FOLLOWED_TEAMS.map((t) => teamFullId(t.league, t.espnId))
+    );
+    games = games
+      .map((g) => ({
+        ...g,
+        followed:
+          g.followed ||
+          defaultFollowed.has(g.home.id) ||
+          defaultFollowed.has(g.away.id),
+      }))
+      .filter((g) => g.followed || g.isPlayoff);
   }
 
   // For any live primary-team game, also fetch the summary endpoint to enrich
