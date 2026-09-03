@@ -10,7 +10,7 @@ import {
 import { easternDateString, scoreboardDates } from "./scoreboardDates";
 import { fetchMlbGames } from "./mlbApi";
 import { fetchNhlGames } from "./nhlApi";
-import { fetchCfbGames, fetchCbbGames } from "./cfbdApi";
+import { fetchCfbGames } from "./cfbdApi";
 
 // site.web.api.espn.com is a sibling of the well-known site.api.espn.com
 // subdomain that returns the SAME flat scoreboard payload but is not behind
@@ -258,13 +258,13 @@ const ALL_LEAGUES: LeagueKey[] = [
 ];
 
 // Per-league source dispatch. MLB / NHL go to the league's own official
-// stats API; CFB / CBB to CollegeFootballData; everything else (NBA, NFL,
-// World Cup) rides the un-WAF'd site.web.api.espn.com scoreboard.
+// stats API; CFB uses CollegeFootballData (which has no basketball surface);
+// everything else (NBA, NFL, CBB, World Cup) rides the un-WAF'd
+// site.web.api.espn.com scoreboard.
 async function fetchGamesForLeague(league: LeagueKey): Promise<Game[]> {
   if (league === "mlb") return fetchMlbGames(scoreboardDates());
   if (league === "nhl") return fetchNhlGames(scoreboardDates());
   if (league === "college-football") return fetchCfbGames(scoreboardDates());
-  if (league === "mens-college-basketball") return fetchCbbGames(scoreboardDates());
   const events = await fetchLeagueScoreboard(league);
   return events.map((ev) => toGame(league, ev));
 }
