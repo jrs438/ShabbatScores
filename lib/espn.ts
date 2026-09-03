@@ -12,6 +12,7 @@ import { fetchMlbGames } from "./mlbApi";
 import { fetchNhlGames } from "./nhlApi";
 import { fetchNbaGames } from "./nbaApi";
 import { fetchCfbGames, fetchCbbGames } from "./cfbdApi";
+import { fetchNflGames } from "./nflEspnCore";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 
@@ -254,14 +255,14 @@ const ALL_LEAGUES: LeagueKey[] = [
   "world-cup",
 ];
 
-// Per-league source dispatch. MLB, NHL, NBA, CFB, and CBB use free official
-// APIs (or public CDNs) that work from Vercel; NFL and the World Cup still
-// try ESPN and fall back to empty when its WAF 403s. Returns
-// already-normalized Game[].
+// Per-league source dispatch. All the big leagues go through free official
+// APIs / public CDNs / the un-WAF'd ESPN core subdomain. Only the World Cup
+// is still on site.api ESPN (fine — soccer feed hasn't 403'd for us).
 async function fetchGamesForLeague(league: LeagueKey): Promise<Game[]> {
   if (league === "mlb") return fetchMlbGames(scoreboardDates());
   if (league === "nhl") return fetchNhlGames(scoreboardDates());
   if (league === "nba") return fetchNbaGames(scoreboardDates());
+  if (league === "nfl") return fetchNflGames(scoreboardDates());
   if (league === "college-football") return fetchCfbGames(scoreboardDates());
   if (league === "mens-college-basketball") return fetchCbbGames(scoreboardDates());
   const events = await fetchLeagueScoreboard(league);
