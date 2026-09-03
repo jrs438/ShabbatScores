@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchMlbGames } from "@/lib/mlbApi";
 import { fetchNhlGames } from "@/lib/nhlApi";
-import { fetchCfbGames, fetchCbbGames } from "@/lib/cfbdApi";
+import { fetchCfbGames } from "@/lib/cfbdApi";
 import { fetchLeagueScoreboard, toGame } from "@/lib/espn";
 import { scoreboardDates, todayInEastern } from "@/lib/scoreboardDates";
 import type { Game } from "@/lib/types";
@@ -16,7 +16,7 @@ export const revalidate = 0;
 //   NBA → site.web.api.espn.com (ESPN scoreboard, un-WAF'd sibling of site.api)
 //   NFL → site.web.api.espn.com (same)
 //   CFB → api.collegefootballdata.com/games (Bearer token)
-//   CBB → api.collegefootballdata.com/basketball/games (same key)
+//   CBB → site.web.api.espn.com (CFBD has no basketball surface)
 //
 // Query params:
 //   ?date=YYYYMMDD             — single date override (skips scoreboardDates)
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     fetchEspn("nba", dates),
     fetchEspn("nfl", dates),
     fetchCfbGames(dates),
-    fetchCbbGames(dates),
+    fetchEspn("mens-college-basketball", dates),
   ]);
 
   const summarize = (r: PromiseSettledResult<Game[]>) => {
