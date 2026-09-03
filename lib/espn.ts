@@ -11,14 +11,13 @@ import { easternDateString, scoreboardDates } from "./scoreboardDates";
 import { fetchMlbGames } from "./mlbApi";
 import { fetchNhlGames } from "./nhlApi";
 import { fetchCfbGames, fetchCbbGames } from "./cfbdApi";
-import { fetchNflGames, fetchNbaGames } from "./espnCore";
 
-const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
-
-// ESPN's unofficial site.api is fronted by an Akamai-style WAF that 403s
-// bot-looking clients. Sending browser headers gets past it *sometimes*;
-// for the leagues where we have better free official sources (MLB, NHL) we
-// bypass ESPN entirely — see fetchGamesForLeague below.
+// site.web.api.espn.com is a sibling of the well-known site.api.espn.com
+// subdomain that returns the SAME flat scoreboard payload but is not behind
+// the Akamai WAF that 403s Vercel IPs. Verified via /api/debug-nba on 9/3.
+// We use it for every league whose data lives in ESPN's scoreboard shape
+// (NBA, NFL, World Cup); MLB/NHL/CFB/CBB have better-official sources.
+const ESPN_BASE = "https://site.web.api.espn.com/apis/site/v2/sports";
 const ESPN_HEADERS: HeadersInit = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -71,9 +70,13 @@ function mapStatus(state: string, name: string): GameStatus {
   return "scheduled";
 }
 
-export async function fetchLeagueScoreboard(league: LeagueKey): Promise<EspnEvent[]> {
+export async function fetchLeagueScoreboard(
+  league: LeagueKey,
+  dates?: string[]
+): Promise<EspnEvent[]> {
   const allEvents: EspnEvent[] = [];
-  for (const date of scoreboardDates()) {
+  const window = dates && dates.length > 0 ? dates : scoreboardDates();
+  for (const date of window) {
     try {
       const url = `${ESPN_BASE}/${LEAGUE_SPORT_PATH[league]}/scoreboard?dates=${date}`;
       const res = await fetch(url, {
@@ -254,14 +257,12 @@ const ALL_LEAGUES: LeagueKey[] = [
   "world-cup",
 ];
 
-// Per-league source dispatch. All the big leagues go through free official
-// APIs / public CDNs / the un-WAF'd ESPN core subdomain. Only the World Cup
-// is still on site.api ESPN (fine — soccer feed hasn't 403'd for us).
+// Per-league source dispatch. MLB / NHL go to the league's own official
+// stats API; CFB / CBB to CollegeFootballData; everything else (NBA, NFL,
+// World Cup) rides the un-WAF'd site.web.api.espn.com scoreboard.
 async function fetchGamesForLeague(league: LeagueKey): Promise<Game[]> {
   if (league === "mlb") return fetchMlbGames(scoreboardDates());
   if (league === "nhl") return fetchNhlGames(scoreboardDates());
-  if (league === "nba") return fetchNbaGames(scoreboardDates());
-  if (league === "nfl") return fetchNflGames(scoreboardDates());
   if (league === "college-football") return fetchCfbGames(scoreboardDates());
   if (league === "mens-college-basketball") return fetchCbbGames(scoreboardDates());
   const events = await fetchLeagueScoreboard(league);

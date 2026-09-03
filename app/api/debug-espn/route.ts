@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchMlbGames } from "@/lib/mlbApi";
 import { fetchNhlGames } from "@/lib/nhlApi";
 import { fetchCfbGames, fetchCbbGames } from "@/lib/cfbdApi";
-import { fetchNflGames, fetchNbaGames } from "@/lib/espnCore";
+import { fetchLeagueScoreboard, toGame } from "@/lib/espn";
 import { scoreboardDates, todayInEastern } from "@/lib/scoreboardDates";
+import type { Game } from "@/lib/types";
+import type { LeagueKey } from "@/lib/teams";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,14 +13,14 @@ export const revalidate = 0;
 // Verifies our per-league sources:
 //   MLB → statsapi.mlb.com
 //   NHL → api-web.nhle.com
-//   NBA → sports.core.api.espn.com (ESPN core, works for any date)
-//   NFL → sports.core.api.espn.com (ESPN core, not WAF-blocked)
+//   NBA → site.web.api.espn.com (ESPN scoreboard, un-WAF'd sibling of site.api)
+//   NFL → site.web.api.espn.com (same)
 //   CFB → api.collegefootballdata.com/games (Bearer token)
 //   CBB → api.collegefootballdata.com/basketball/games (same key)
 //
 // Query params:
-//   ?date=YYYYMMDD     — single date override (skips scoreboardDates)
-//   ?dates=YYYYMMDD,YYYYMMDD  — explicit multi-date list
+//   ?date=YYYYMMDD             — single date override (skips scoreboardDates)
+//   ?dates=YYYYMMDD,YYYYMMDD   — explicit multi-date list
 // With no params, uses the same window the production dashboard uses.
 
 type Sample = {
@@ -45,6 +47,11 @@ function parseDates(req: NextRequest): { dates: string[]; source: string } {
   return { dates: scoreboardDates(), source: "phase-default" };
 }
 
+async function fetchEspn(league: LeagueKey, dates: string[]): Promise<Game[]> {
+  const events = await fetchLeagueScoreboard(league, dates);
+  return events.map((ev) => toGame(league, ev));
+}
+
 export async function GET(req: NextRequest) {
   const today = todayInEastern();
   const { dates, source } = parseDates(req);
@@ -52,15 +59,13 @@ export async function GET(req: NextRequest) {
   const [mlb, nhl, nba, nfl, cfb, cbb] = await Promise.allSettled([
     fetchMlbGames(dates),
     fetchNhlGames(dates),
-    fetchNbaGames(dates),
-    fetchNflGames(dates),
+    fetchEspn("nba", dates),
+    fetchEspn("nfl", dates),
     fetchCfbGames(dates),
     fetchCbbGames(dates),
   ]);
 
-  const summarize = (
-    r: PromiseSettledResult<Awaited<ReturnType<typeof fetchMlbGames>>>
-  ) => {
+  const summarize = (r: PromiseSettledResult<Game[]>) => {
     if (r.status !== "fulfilled") return { ok: false, error: String(r.reason) };
     const games = r.value;
     const sample: Sample[] = games.slice(0, 5).map((g) => ({
