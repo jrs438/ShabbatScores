@@ -10,9 +10,8 @@ import {
 import { easternDateString, scoreboardDates } from "./scoreboardDates";
 import { fetchMlbGames } from "./mlbApi";
 import { fetchNhlGames } from "./nhlApi";
-import { fetchNbaGames } from "./nbaApi";
 import { fetchCfbGames, fetchCbbGames } from "./cfbdApi";
-import { fetchNflGames } from "./nflEspnCore";
+import { fetchNflGames, fetchNbaGames } from "./espnCore";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports";
 

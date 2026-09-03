@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { fetchMlbGames } from "@/lib/mlbApi";
 import { fetchNhlGames } from "@/lib/nhlApi";
-import { fetchNbaGames } from "@/lib/nbaApi";
 import { fetchCfbGames, fetchCbbGames } from "@/lib/cfbdApi";
-import { fetchNflGames } from "@/lib/nflEspnCore";
+import { fetchNflGames, fetchNbaGames } from "@/lib/espnCore";
 import { scoreboardDates, todayInEastern } from "@/lib/scoreboardDates";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +11,7 @@ export const revalidate = 0;
 // Verifies our per-league sources:
 //   MLB → statsapi.mlb.com
 //   NHL → api-web.nhle.com
-//   NBA → cdn.nba.com (public static CDN)
+//   NBA → sports.core.api.espn.com (ESPN core, works for any date)
 //   NFL → sports.core.api.espn.com (ESPN core, not WAF-blocked)
 //   CFB → api.collegefootballdata.com/games (Bearer token)
 //   CBB → api.collegefootballdata.com/basketball/games (same key)
