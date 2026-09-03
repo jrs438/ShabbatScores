@@ -1,5 +1,6 @@
 import type { Game, GameStatus } from "./types";
 import { teamFullId } from "./teams";
+import { easternDateString } from "./scoreboardDates";
 
 // CollegeFootballData.com — free tier, one Bearer token covers both CFB and
 // men's CBB. Set CFBD_API_KEY in the environment.
@@ -243,7 +244,9 @@ export async function fetchCfbGames(yyyymmddDates: string[]): Promise<Game[]> {
         for (const g of games) {
           if (!g.startDate || !g.homeTeam || !g.awayTeam) continue;
           const iso = new Date(g.startDate).toISOString();
-          const dateKey = iso.slice(0, 10).replace(/-/g, "");
+          // Key by ET calendar date, not UTC — a 10pm PT Saturday CFB game
+          // is 05:00 UTC Sunday but everyone considers it a Saturday game.
+          const dateKey = easternDateString(iso).replace(/-/g, "");
           if (wantedDates.size > 0 && !wantedDates.has(dateKey)) continue;
           const live = overlay.get(g.id);
           const home = teamInfo(
@@ -338,7 +341,7 @@ export async function fetchCbbGames(yyyymmddDates: string[]): Promise<Game[]> {
         for (const g of games) {
           if (!g.startDate || !g.homeTeam || !g.awayTeam) continue;
           const iso = new Date(g.startDate).toISOString();
-          const dateKey = iso.slice(0, 10).replace(/-/g, "");
+          const dateKey = easternDateString(iso).replace(/-/g, "");
           if (!wanted.has(dateKey)) continue;
           const home = teamInfo(g.homeTeamId, g.homeTeam, g.homePoints, "mens-college-basketball");
           const away = teamInfo(g.awayTeamId, g.awayTeam, g.awayPoints, "mens-college-basketball");
