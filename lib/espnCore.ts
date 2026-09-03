@@ -1,12 +1,16 @@
 import type { Game, GameStatus } from "./types";
 import { teamFullId } from "./teams";
+import type { LeagueKey } from "./teams";
 
 // ESPN's "core" API subdomain — sports.core.api.espn.com — is NOT behind
-// the same Akamai WAF as site.api.espn.com. It uses a ref-based structure:
-// /events?dates=YYYYMMDD returns a page of {$ref} pointers we have to
-// follow. More requests than site.api, but returns real live data.
+// the same Akamai WAF as site.api.espn.com. Ref-based structure:
+// /events?dates=YYYYMMDD returns {items: [{$ref}]} pointers we have to
+// follow to competition -> competitors -> team/score/records. More
+// requests per event than site.api's flat scoreboard, but works from
+// Vercel and supports arbitrary dates (unlike cdn.nba.com's today-only
+// live feed).
 
-const CORE = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl";
+const CORE = "https://sports.core.api.espn.com/v2/sports";
 
 const HDRS: HeadersInit = {
   "User-Agent":
@@ -29,7 +33,7 @@ type CoreEvent = {
   date: string;
   name: string;
   shortName: string;
-  competitions: Ref[]; // ref-based
+  competitions: Ref[];
   season?: { $ref?: string; type?: number; year?: number };
 };
 
@@ -99,7 +103,15 @@ function mapStatus(state?: string, name?: string): GameStatus {
   return "scheduled";
 }
 
-async function toGame(ev: CoreEvent): Promise<Game | null> {
+type CoreLeagueConfig = {
+  sportPath: string;   // "football" | "basketball" | ...
+  leaguePath: string;  // "nfl" | "nba" | ...
+  leagueKey: LeagueKey;
+  leagueLabel: string; // "NFL" | "NBA"
+  sport: string;       // "football" | "basketball"
+};
+
+async function toGame(ev: CoreEvent, cfg: CoreLeagueConfig): Promise<Game | null> {
   const compRef = ev.competitions?.[0]?.$ref;
   if (!compRef) return null;
   const comp = await getJson<CoreCompetition>(compRef);
@@ -120,7 +132,6 @@ async function toGame(ev: CoreEvent): Promise<Game | null> {
   ]);
   if (!homeTeam || !awayTeam) return null;
 
-  // Scores are refs on core; site.api returns them inline. Handle both.
   async function resolveScore(s: CoreCompetitor["score"]): Promise<number | null> {
     if (s && typeof s === "object" && "value" in s && typeof s.value === "number") return s.value;
     if (s && "$ref" in s) {
@@ -148,18 +159,18 @@ async function toGame(ev: CoreEvent): Promise<Game | null> {
   const name = status?.type?.name;
 
   return {
-    id: `nfl-${ev.id}`,
+    id: `${cfg.leagueKey}-${ev.id}`,
     espnEventId: ev.id,
-    league: "NFL",
-    leagueKey: "nfl",
-    sport: "football",
+    league: cfg.leagueLabel,
+    leagueKey: cfg.leagueKey,
+    sport: cfg.sport,
     status: mapStatus(state, name),
     statusDetail: status?.type?.shortDetail ?? "Scheduled",
     startTime: ev.date,
     period: status?.period != null ? String(status.period) : null,
     clock: status?.displayClock ?? null,
     home: {
-      id: teamFullId("nfl", homeTeam.id),
+      id: teamFullId(cfg.leagueKey, homeTeam.id),
       name: homeTeam.shortDisplayName ?? homeTeam.displayName,
       abbr: homeTeam.abbreviation,
       score: homeScore,
@@ -167,7 +178,7 @@ async function toGame(ev: CoreEvent): Promise<Game | null> {
       record: homeRecord,
     },
     away: {
-      id: teamFullId("nfl", awayTeam.id),
+      id: teamFullId(cfg.leagueKey, awayTeam.id),
       name: awayTeam.shortDisplayName ?? awayTeam.displayName,
       abbr: awayTeam.abbreviation,
       score: awayScore,
@@ -182,15 +193,19 @@ async function toGame(ev: CoreEvent): Promise<Game | null> {
   };
 }
 
-export async function fetchNflGames(yyyymmddDates: string[]): Promise<Game[]> {
+async function fetchEspnCoreGames(
+  cfg: CoreLeagueConfig,
+  yyyymmddDates: string[]
+): Promise<Game[]> {
   const all: Game[] = [];
   const seen = new Set<string>();
   for (const date of yyyymmddDates) {
-    const page = await getJson<EventsPage>(`${CORE}/events?dates=${date}&limit=100`);
+    const url = `${CORE}/${cfg.sportPath}/leagues/${cfg.leaguePath}/events?dates=${date}&limit=100`;
+    const page = await getJson<EventsPage>(url);
     if (!page?.items || page.items.length === 0) continue;
     const events = await Promise.all(page.items.map((r) => getJson<CoreEvent>(r.$ref)));
     const games = await Promise.all(
-      events.filter((e): e is CoreEvent => e != null).map(toGame)
+      events.filter((e): e is CoreEvent => e != null).map((e) => toGame(e, cfg))
     );
     for (const g of games) {
       if (!g || seen.has(g.id)) continue;
@@ -199,4 +214,30 @@ export async function fetchNflGames(yyyymmddDates: string[]): Promise<Game[]> {
     }
   }
   return all;
+}
+
+export function fetchNflGames(yyyymmddDates: string[]): Promise<Game[]> {
+  return fetchEspnCoreGames(
+    {
+      sportPath: "football",
+      leaguePath: "nfl",
+      leagueKey: "nfl",
+      leagueLabel: "NFL",
+      sport: "football",
+    },
+    yyyymmddDates
+  );
+}
+
+export function fetchNbaGames(yyyymmddDates: string[]): Promise<Game[]> {
+  return fetchEspnCoreGames(
+    {
+      sportPath: "basketball",
+      leaguePath: "nba",
+      leagueKey: "nba",
+      leagueLabel: "NBA",
+      sport: "basketball",
+    },
+    yyyymmddDates
+  );
 }
